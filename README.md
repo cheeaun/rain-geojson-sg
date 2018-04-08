@@ -13,6 +13,11 @@ Rain GeoJSON SG
 - Intensity values are improvised to be 0-100. These may not be standard/scientific values. They are reverse-engineered from the rain intensity color scheme (Light → Moderate → Heavy).
 - Only the latest GeoJSON data is cached and will updated every few minutes.
 
+Try it out
+---
+
+URL: <https://rain-geojson-sg.now.sh/>
+
 Technicalities
 ---
 
