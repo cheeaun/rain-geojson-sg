@@ -151,6 +151,7 @@ module.exports = cors(async (req, res) => {
       res.setHeader('content-type', 'application/json');
       res.setHeader('content-encoding', 'gzip');
       res.setHeader('content-length', data.length);
+      res.setHeader('cache-control', 'public, max-age=120');
       res.end(data);
       break;
     case '/favicon.ico':
