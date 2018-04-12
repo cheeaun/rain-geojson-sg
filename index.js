@@ -152,6 +152,7 @@ module.exports = cors(async (req, res) => {
       res.setHeader('content-encoding', 'gzip');
       res.setHeader('content-length', data.length);
       res.setHeader('cache-control', 'public, max-age=120');
+      res.setHeader('x-geojson-datetime', currentDt);
       res.end(data);
       break;
     case '/favicon.ico':
