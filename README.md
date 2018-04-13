@@ -29,7 +29,7 @@ Technicalities
 
 The URLs:
 
-- `/` - return this README file
+- `/` - return a basic JSON of basic information
 - `/now` - return the GeoJSON result of latest radar image
 
 Copyright/License

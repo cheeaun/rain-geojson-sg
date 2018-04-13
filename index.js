@@ -143,8 +143,11 @@ module.exports = cors(async (req, res) => {
   const { pathname } = url.parse(req.url);
   switch (pathname) {
     case '/':
-      res.setHeader('content-type', 'text/plain');
-      res.end(fs.readFileSync('README.md'));
+      res.setHeader('content-type', 'application/json');
+      res.end(JSON.stringify({
+        repo: 'https://github.com/cheeaun/rain-geojson-sg',
+        author: 'Lim Chee Aun',
+      }));
       break;
     case '/now':
       const data = await getCachedGeoJSON();
