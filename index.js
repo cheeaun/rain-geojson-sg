@@ -95,15 +95,10 @@ function convertPNG2GeoJSON(png){
   return fc;
 };
 
-let currentDt;
-function fetchImage(){
-  let url = `http://cdn.neaaws.com/rain_radar/dpsri_70km_Remove_${currentDt}0000dBR.dpsri.png`;
-  return got(url, { encoding: null }).catch((e) => {
-    currentDt = datetimeStr(-5);
-    console.log('Current rain area fetch fail. Fallback to older one.', currentDt);
-    url = `http://cdn.neaaws.com/rain_radar/dpsri_70km_Remove_${currentDt}0000dBR.dpsri.png`;
-    return got(url, { encoding: null });
-  });
+function fetchImage(dt){
+  const url = `http://cdn.neaaws.com/rain_radar/dpsri_70km_Remove_${dt}0000dBR.dpsri.png`;
+  console.log(`➡️ ${url}`);
+  return got(url, { encoding: null });
 }
 
 const parsePNG = (body) => new Promise((resolve, reject) => {
@@ -116,12 +111,29 @@ const parsePNG = (body) => new Promise((resolve, reject) => {
   });
 });
 
+let cachedDt;
 let geoJSONCache = null;
 const getGeoJSON = async () => {
-  const dt = datetimeStr();
-  if (dt === currentDt) return;
-  currentDt = dt;
-  const { body } = await fetchImage();
+  let dt = datetimeStr();
+  if (dt === cachedDt) return;
+
+  let image;
+  try {
+    image = await fetchImage(dt);
+  } catch(e) {
+    // Retry with older radar image
+    dt = datetimeStr(-5);
+    // If older radar image is already cached, return immediately
+    if (dt === cachedDt) return geoJSONCache;
+    try {
+      image = await fetchImage(dt);
+    } catch(e) {
+      return geoJSONCache;
+    }
+  }
+  cachedDt = dt;
+  const { body } = image;
+
   const data = await parsePNG(body);
   const geojson = convertPNG2GeoJSON(data);
   const geojsonStr = JSON.stringify(geojson);
@@ -130,14 +142,7 @@ const getGeoJSON = async () => {
   return geoJSONCache;
 };
 getGeoJSON();
-setInterval(getGeoJSON, 2.5 * 60 * 1000); // every 2.5 minutes
-
-const getCachedGeoJSON = async () => {
-  if (geoJSONCache){
-    return await Promise.resolve(geoJSONCache);
-  }
-  return await getGeoJSON();
-};
+setInterval(getGeoJSON, 30 * 1000); // every half minute
 
 module.exports = cors(async (req, res) => {
   const { pathname } = url.parse(req.url);
@@ -150,12 +155,12 @@ module.exports = cors(async (req, res) => {
       }));
       break;
     case '/now':
-      const data = await getCachedGeoJSON();
+      const data = geoJSONCache || await getGeoJSON();
       res.setHeader('content-type', 'application/json');
       res.setHeader('content-encoding', 'gzip');
       res.setHeader('content-length', data.length);
-      res.setHeader('cache-control', 'public, max-age=120');
-      res.setHeader('x-geojson-datetime', currentDt);
+      res.setHeader('cache-control', 'public, max-age=60');
+      res.setHeader('x-geojson-datetime', cachedDt);
       res.end(data);
       break;
     case '/favicon.ico':
