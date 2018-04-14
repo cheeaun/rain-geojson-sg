@@ -201,7 +201,8 @@ module.exports = cors(async (req, res) => {
             const { name, lat, long } = stations[id];
             for (let k in values){
               const v = values[k];
-              values[k] = Number(v) || v;
+              const n = Number(v);
+              values[k] = !isNaN(n) ? n : v;
             };
             return {
               type: 'Feature',
