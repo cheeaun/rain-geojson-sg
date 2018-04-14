@@ -157,6 +157,10 @@ const stations = {};
   });
 })();
 const observationsCache = new Map();
+let lastObservations = JSON.stringify({
+  type: 'FeatureCollection',
+  features: [],
+});
 
 module.exports = cors(async (req, res) => {
   const { pathname } = url.parse(req.url);
@@ -186,30 +190,34 @@ module.exports = cors(async (req, res) => {
       break;
     case '/observations':
       const dataURL = 'http://www.weather.gov.sg/mobile/json/rest-get-latest-observation-for-all-locs.json';
-      const { body } = await got(dataURL, { json: true, cache: observationsCache });
+      let body;
       res.setHeader('content-type', 'application/json');
       res.setHeader('cache-control', 'public, max-age=60');
-      res.end(JSON.stringify({
-        type: 'FeatureCollection',
-        features: Object.entries(body.data.station).map(([id, values]) => {
-          const { name, lat, long } = stations[id];
-          for (let k in values){
-            const v = values[k];
-            values[k] = Number(v) || v;
-          };
-          return {
-            type: 'Feature',
-            properties: {
-              id,
-              name,
-              ...values,
-            },
-            geometry: {
-              type: 'Point',
-              coordinates: [long, lat].map(Number),
-            },
-          };
-        })
-      }));
+      try {
+        const { body } = await got(dataURL, { json: true, cache: observationsCache });
+        lastObservations = JSON.stringify({
+          type: 'FeatureCollection',
+          features: Object.entries(body.data.station).map(([id, values]) => {
+            const { name, lat, long } = stations[id];
+            for (let k in values){
+              const v = values[k];
+              values[k] = Number(v) || v;
+            };
+            return {
+              type: 'Feature',
+              properties: {
+                id,
+                name,
+                ...values,
+              },
+              geometry: {
+                type: 'Point',
+                coordinates: [long, lat].map(Number),
+              },
+            };
+          })
+        });
+      } catch(e) {}
+      res.end(lastObservations);
   }
 });
