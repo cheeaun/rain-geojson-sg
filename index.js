@@ -159,13 +159,13 @@ module.exports = cors(async (req, res) => {
       break;
     case '/now':
       const ageDiff = datetimeNowStr() - cachedDt;
-      const maxAge = Math.max(0, (5 - ageDiff)) * 60;
+      const proxyMaxAge = Math.max(0, (5 - ageDiff)) * 60;
 
       const data = geoJSONCache || await getGeoJSON();
       res.setHeader('content-type', 'application/json');
       res.setHeader('content-encoding', 'gzip');
       res.setHeader('content-length', data.length);
-      res.setHeader('cache-control', `public, max-age=${maxAge}`);
+      res.setHeader('cache-control', `public, max-age=60, s-maxage=${proxyMaxAge}`);
       res.setHeader('x-geojson-datetime', cachedDt);
       res.end(data);
       break;
