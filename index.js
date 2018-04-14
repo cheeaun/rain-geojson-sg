@@ -1,7 +1,6 @@
 const fs = require('fs');
 const cors = require('micro-cors')();
 const url = require('url');
-const haversine = require('new-point-haversine');
 const got = require('got');
 const PNG = require('pngjs').PNG;
 const { featureCollection, polygon, multiPolygon, round } = require('@turf/helpers');
@@ -11,9 +10,7 @@ const zlib = require('zlib');
 const rgbHex = require('rgb-hex');
 
 // Rain area center and boundaries
-const center = [103.972583, 1.349110];
-const { lowerLat, upperLat } = haversine.getLatitudeBounds(center[1], 70, 'km');
-const { lowerLong, upperLong } = haversine.getLongitudeBounds(center[1], center[0], 70, 'km');
+const lowerLat = 1.1450, upperLat = 1.4572, lowerLong = 103.565, upperLong = 104.130;
 const distanceLat = Math.abs(upperLat - lowerLat);
 const distanceLong = Math.abs(upperLong - lowerLong);
 
@@ -27,8 +24,10 @@ const getIntensity = (color) => {
   return Math.ceil((index+1)/intensityColorsCount*100);
 };
 
+const offset = 8; // Singapore timezone +0800
 const datetimeStr = (customMinutes) => {
-  const d = new Date();
+  // https://stackoverflow.com/a/11124448/20838
+  const d = new Date( new Date().getTime() + offset * 3600 * 1000);
   if (customMinutes) d.setUTCMinutes(d.getUTCMinutes() + customMinutes);
   const year = d.getUTCFullYear();
   const month = ('' + (d.getUTCMonth() + 1)).padStart(2, '0');
@@ -96,7 +95,7 @@ function convertPNG2GeoJSON(png){
 };
 
 function fetchImage(dt){
-  const url = `http://cdn.neaaws.com/rain_radar/dpsri_70km_Remove_${dt}0000dBR.dpsri.png`;
+  const url = `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`;
   console.log(`➡️ ${url}`);
   return got(url, { encoding: null });
 }
