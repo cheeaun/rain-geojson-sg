@@ -10,7 +10,7 @@ const zlib = require('zlib');
 const rgbHex = require('rgb-hex');
 
 // Rain area center and boundaries
-const lowerLat = 1.1450, upperLat = 1.4572, lowerLong = 103.565, upperLong = 104.130;
+const lowerLat = 1.156, upperLat = 1.475, lowerLong = 103.565, upperLong = 104.130;
 const distanceLat = Math.abs(upperLat - lowerLat);
 const distanceLong = Math.abs(upperLong - lowerLong);
 
