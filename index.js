@@ -25,16 +25,20 @@ const getIntensity = (color) => {
 };
 
 const offset = 8; // Singapore timezone +0800
-const datetimeStr = (customMinutes) => {
+function datetimeNowStr(){
   // https://stackoverflow.com/a/11124448/20838
   const d = new Date( new Date().getTime() + offset * 3600 * 1000);
-  if (customMinutes) d.setUTCMinutes(d.getUTCMinutes() + customMinutes);
   const year = d.getUTCFullYear();
   const month = ('' + (d.getUTCMonth() + 1)).padStart(2, '0');
   const day = ('' + d.getUTCDate()).padStart(2, '0');
   const hour = ('' + d.getUTCHours()).padStart(2, '0');
-  const min = ('' + Math.floor(d.getUTCMinutes()/5) * 5).padStart(2, '0');
-  return year + month + day + hour + min;
+  const min = ('' + d.getUTCMinutes()).padStart(2, '0');
+  return parseInt(year + month + day + hour + min, 10);
+};
+
+function datetimeStr(customMinutes = 0){
+  const d = datetimeNowStr() + customMinutes;
+  return Math.floor(d/5)*5;
 };
 
 function convertPNG2GeoJSON(png){
@@ -154,11 +158,14 @@ module.exports = cors(async (req, res) => {
       }));
       break;
     case '/now':
+      const ageDiff = datetimeNowStr() - cachedDt;
+      const maxAge = Math.max(0, (5 - ageDiff)) * 60;
+
       const data = geoJSONCache || await getGeoJSON();
       res.setHeader('content-type', 'application/json');
       res.setHeader('content-encoding', 'gzip');
       res.setHeader('content-length', data.length);
-      res.setHeader('cache-control', 'public, max-age=60');
+      res.setHeader('cache-control', `public, max-age=${maxAge}`);
       res.setHeader('x-geojson-datetime', cachedDt);
       res.end(data);
       break;
