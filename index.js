@@ -147,6 +147,17 @@ const getGeoJSON = async () => {
 getGeoJSON();
 setInterval(getGeoJSON, 30 * 1000); // every half minute
 
+const stations = {};
+(async () => {
+  const stationsURL = 'http://www.weather.gov.sg/mobile/json/rest-get-all-climate-stations.json';
+  const { body } = await got(stationsURL, { json: true });
+  const stationMaps = {};
+  body.data.forEach(d => {
+    stations[d.id] = d;
+  });
+})();
+const observationsCache = new Map();
+
 module.exports = cors(async (req, res) => {
   const { pathname } = url.parse(req.url);
   switch (pathname) {
@@ -156,6 +167,10 @@ module.exports = cors(async (req, res) => {
         repo: 'https://github.com/cheeaun/rain-geojson-sg',
         author: 'Lim Chee Aun',
       }));
+      break;
+    case '/favicon.ico':
+      res.setHeader('content-type', 'image/x-icon');
+      res.end();
       break;
     case '/now':
       const ageDiff = datetimeNowStr() - cachedDt;
@@ -169,9 +184,32 @@ module.exports = cors(async (req, res) => {
       res.setHeader('x-geojson-datetime', cachedDt);
       res.end(data);
       break;
-    case '/favicon.ico':
-      res.setHeader('content-type', 'image/x-icon');
-      res.end();
-      break;
+    case '/observations':
+      const dataURL = 'http://www.weather.gov.sg/mobile/json/rest-get-latest-observation-for-all-locs.json';
+      const { body } = await got(dataURL, { json: true, cache: observationsCache });
+      res.setHeader('content-type', 'application/json');
+      res.setHeader('cache-control', 'public, max-age=60');
+      res.end(JSON.stringify({
+        type: 'FeatureCollection',
+        features: Object.entries(body.data.station).map(([id, values]) => {
+          const { name, lat, long } = stations[id];
+          for (let k in values){
+            const v = values[k];
+            values[k] = Number(v) || v;
+          };
+          return {
+            type: 'Feature',
+            properties: {
+              id,
+              name,
+              ...values,
+            },
+            geometry: {
+              type: 'Point',
+              coordinates: [long, lat].map(Number),
+            },
+          };
+        })
+      }));
   }
 });
