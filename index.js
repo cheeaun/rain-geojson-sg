@@ -160,13 +160,12 @@ const stations = {};
   });
 })();
 const observationsCache = new Map();
-let lastObservations = JSON.stringify({
-  type: 'FeatureCollection',
-  features: [],
-});
+let lastObservations = {};
+
+const dataURL = 'http://www.weather.gov.sg/mobile/json/rest-get-latest-observation-for-all-locs.json';
 
 module.exports = cors(async (req, res) => {
-  const { pathname } = url.parse(req.url);
+  const { pathname, query } = url.parse(req.url, true);
   switch (pathname) {
     case '/':
       res.setHeader('content-type', 'application/json');
@@ -191,36 +190,46 @@ module.exports = cors(async (req, res) => {
       res.end(data);
       break;
     case '/observations':
-      const dataURL = 'http://www.weather.gov.sg/mobile/json/rest-get-latest-observation-for-all-locs.json';
-      let body;
+      const compact = !!query.compact;
       res.setHeader('content-type', 'application/json');
       res.setHeader('cache-control', 'public, max-age=60');
       try {
         const { body } = await got(dataURL, { json: true, cache: observationsCache });
-        lastObservations = JSON.stringify({
+        let features = Object.entries(body.data.station).map(([id, values]) => {
+          const { name, lat, long } = stations[id];
+          for (let k in values){
+            const v = values[k];
+            const n = Number(v);
+            values[k] = !isNaN(n) ? n : v;
+          };
+          return {
+            type: 'Feature',
+            properties: {
+              id,
+              name,
+              ...values,
+            },
+            geometry: {
+              type: 'Point',
+              coordinates: [long, lat].map(Number),
+            },
+          };
+        });
+        if (compact){
+          features = features.filter(f => {
+            return Object.values(f.properties).some(v => typeof v === 'number' && v > 0);
+          }).map(f => {
+            const { rain_mm, temp_celcius, relative_humidity, wind_direction } = f.properties;
+            f.properties = { temp_celcius, relative_humidity, wind_direction };
+            if (rain_mm) f.properties.rain_mm = rain_mm;
+            return f;
+          });
+        }
+        lastObservations[compact] = JSON.stringify({
           type: 'FeatureCollection',
-          features: Object.entries(body.data.station).map(([id, values]) => {
-            const { name, lat, long } = stations[id];
-            for (let k in values){
-              const v = values[k];
-              const n = Number(v);
-              values[k] = !isNaN(n) ? n : v;
-            };
-            return {
-              type: 'Feature',
-              properties: {
-                id,
-                name,
-                ...values,
-              },
-              geometry: {
-                type: 'Point',
-                coordinates: [long, lat].map(Number),
-              },
-            };
-          })
+          features,
         });
       } catch(e) {}
-      res.end(lastObservations);
+      res.end(lastObservations[compact] || '');
   }
 });
