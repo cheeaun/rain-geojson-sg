@@ -127,7 +127,7 @@ const getGeoJSON = async () => {
   let image, data;
   try {
     image = await fetchImage(dt);
-    data = await parsePNG(body);
+    data = await parsePNG(image.body);
   } catch(e) {
     // Retry with older radar image
     dt = datetimeStr(-5);
@@ -135,13 +135,12 @@ const getGeoJSON = async () => {
     if (dt === cachedDt) return geoJSONCache;
     try {
       image = await fetchImage(dt);
-      data = await parsePNG(body);
+      data = await parsePNG(image.body);
     } catch(e) {
       return geoJSONCache;
     }
   }
   cachedDt = dt;
-  const { body } = image;
 
   const geojson = convertPNG2GeoJSON(data, cachedDt);
   const geojsonStr = JSON.stringify(geojson);
