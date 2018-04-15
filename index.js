@@ -41,7 +41,7 @@ function datetimeStr(customMinutes = 0){
   return Math.floor(d/5)*5;
 };
 
-function convertPNG2GeoJSON(png){
+function convertPNG2GeoJSON(png, id){
   const { width, height, data } = png;
   const polygons = [];
   const polygonsByColor = {};
@@ -94,7 +94,10 @@ function convertPNG2GeoJSON(png){
     polygons.push(mp);
   }
 
-  const fc = rewind(featureCollection(polygons));
+  const fc = rewind(featureCollection(polygons, {
+    bbox: [lowerLong, lowerLat, upperLong, upperLat],
+    id,
+  }));
   return fc;
 };
 
@@ -138,7 +141,7 @@ const getGeoJSON = async () => {
   const { body } = image;
 
   const data = await parsePNG(body);
-  const geojson = convertPNG2GeoJSON(data);
+  const geojson = convertPNG2GeoJSON(data, cachedDt);
   const geojsonStr = JSON.stringify(geojson);
   geoJSONCache = zlib.gzipSync(geojsonStr);
   console.log('GeoJSON cached', dt);
@@ -185,7 +188,6 @@ module.exports = cors(async (req, res) => {
       res.setHeader('content-encoding', 'gzip');
       res.setHeader('content-length', data.length);
       res.setHeader('cache-control', `public, max-age=60, s-maxage=${proxyMaxAge}`);
-      res.setHeader('x-geojson-datetime', cachedDt);
       res.end(data);
       break;
     case '/observations':
