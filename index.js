@@ -216,13 +216,13 @@ module.exports = cors(async (req, res) => {
           };
         });
         if (compact){
-          features = features.filter(f => {
-            return Object.values(f.properties).some(v => typeof v === 'number' && v > 0);
-          }).map(f => {
+          features = features.map(f => {
             const { rain_mm, temp_celcius, relative_humidity, wind_direction } = f.properties;
             f.properties = { temp_celcius, relative_humidity, wind_direction };
             if (rain_mm) f.properties.rain_mm = rain_mm;
             return f;
+          }).filter(f => {
+            return Object.values(f.properties).some(v => typeof v === 'number' && v > 0);
           });
         }
         lastObservations[compact] = JSON.stringify({
