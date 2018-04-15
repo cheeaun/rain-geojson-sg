@@ -18,7 +18,7 @@
     "micro-dev": "~2.2.2"
   },
   "scripts": {
-    "start": "micro",
+    "start": "micro -p $PORT",
     "dev": "micro-dev -i README.md"
   },
   "keywords": [
