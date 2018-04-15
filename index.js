@@ -25,9 +25,10 @@ const getIntensity = (color) => {
 };
 
 const offset = 8; // Singapore timezone +0800
-function datetimeNowStr(){
+function datetimeNowStr(customMinutes){
   // https://stackoverflow.com/a/11124448/20838
   const d = new Date( new Date().getTime() + offset * 3600 * 1000);
+  if (customMinutes) d.setUTCMinutes(d.getUTCMinutes() + customMinutes);
   const year = d.getUTCFullYear();
   const month = ('' + (d.getUTCMonth() + 1)).padStart(2, '0');
   const day = ('' + d.getUTCDate()).padStart(2, '0');
@@ -36,8 +37,8 @@ function datetimeNowStr(){
   return parseInt(year + month + day + hour + min, 10);
 };
 
-function datetimeStr(customMinutes = 0){
-  const d = datetimeNowStr() + customMinutes;
+function datetimeStr(customMinutes){
+  const d = datetimeNowStr(customMinutes);
   return Math.floor(d/5)*5;
 };
 
