@@ -119,7 +119,7 @@ const parsePNG = (body) => new Promise((resolve, reject) => {
 });
 
 let cachedDt;
-let geoJSONCache = null;
+let geoJSONCache = '';
 const getGeoJSON = async () => {
   let dt = datetimeStr();
   if (dt === cachedDt) return;
