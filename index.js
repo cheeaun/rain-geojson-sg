@@ -124,10 +124,9 @@ const getGeoJSON = async () => {
   let dt = datetimeStr();
   if (dt === cachedDt) return;
 
-  let image, data;
+  let image;
   try {
     image = await fetchImage(dt);
-    data = await parsePNG(image.body);
   } catch(e) {
     // Retry with older radar image
     dt = datetimeStr(-5);
@@ -135,13 +134,18 @@ const getGeoJSON = async () => {
     if (dt === cachedDt) return geoJSONCache;
     try {
       image = await fetchImage(dt);
-      data = await parsePNG(image.body);
     } catch(e) {
       return geoJSONCache;
     }
   }
+
+  if (image.headers['content-type'] !== 'image/png'){
+    return geoJSONCache;
+  }
+
   cachedDt = dt;
 
+  const data = await parsePNG(image.body);
   const geojson = convertPNG2GeoJSON(data, cachedDt);
   const geojsonStr = JSON.stringify(geojson);
   geoJSONCache = zlib.gzipSync(geojsonStr);
