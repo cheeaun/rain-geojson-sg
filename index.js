@@ -195,7 +195,10 @@ module.exports = cors(async (req, res) => {
       res.end(data);
       break;
     case '/now-id':
+      const ageDiff = datetimeNowStr() - cachedDt;
+      const proxyMaxAge = Math.max(0, (5 - ageDiff)) * 60;
       res.setHeader('content-type', 'text/plain');
+      res.setHeader('cache-control', `public, max-age=60, s-maxage=${proxyMaxAge}`);
       res.end('' + cachedDt);
       break;
     case '/observations':
