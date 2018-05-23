@@ -194,6 +194,10 @@ module.exports = cors(async (req, res) => {
       res.setHeader('cache-control', `public, max-age=60, s-maxage=${proxyMaxAge}`);
       res.end(data);
       break;
+    case '/now-id':
+      res.setHeader('content-type', 'text/plain');
+      res.end('' + cachedDt);
+      break;
     case '/observations':
       const compact = !!query.compact;
       res.setHeader('content-type', 'application/json');
