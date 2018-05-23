@@ -171,6 +171,9 @@ const dataURL = 'http://www.weather.gov.sg/mobile/json/rest-get-latest-observati
 
 module.exports = cors(async (req, res) => {
   const { pathname, query } = url.parse(req.url, true);
+  const ageDiff = datetimeNowStr() - cachedDt;
+  const proxyMaxAge = Math.max(0, (5 - ageDiff)) * 60;
+
   switch (pathname) {
     case '/':
       res.setHeader('content-type', 'application/json');
@@ -184,9 +187,6 @@ module.exports = cors(async (req, res) => {
       res.end();
       break;
     case '/now':
-      const ageDiff = datetimeNowStr() - cachedDt;
-      const proxyMaxAge = Math.max(0, (5 - ageDiff)) * 60;
-
       const data = geoJSONCache || await getGeoJSON();
       res.setHeader('content-type', 'application/json');
       res.setHeader('content-encoding', 'gzip');
@@ -195,8 +195,6 @@ module.exports = cors(async (req, res) => {
       res.end(data);
       break;
     case '/now-id':
-      const ageDiff = datetimeNowStr() - cachedDt;
-      const proxyMaxAge = Math.max(0, (5 - ageDiff)) * 60;
       res.setHeader('content-type', 'text/plain');
       res.setHeader('cache-control', `public, max-age=60, s-maxage=${proxyMaxAge}`);
       res.end('' + cachedDt);
