@@ -195,6 +195,7 @@ module.exports = cors(async (req, res) => {
       res.end(data);
       break;
     case '/now-id':
+      await geoJSONCache || getGeoJSON();
       res.setHeader('content-type', 'text/plain');
       if (cachedDt){
         res.setHeader('cache-control', `public, max-age=60, s-maxage=${proxyMaxAge}`);
