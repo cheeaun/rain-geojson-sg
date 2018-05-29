@@ -1,5 +1,5 @@
 const spawn = require('child_process').spawn;
-const child = spawn('npm', ['start']);
+const child = spawn('npm', ['start'], { shell: true });
 child.stdout.on('data', (data) => {
   console.log(data.toString());
 });
