@@ -18,7 +18,7 @@
     "micro-dev": "~3.0.0"
   },
   "scripts": {
-    "start": "micro",
+    "start": "micro -p ${PORT-3000}",
     "dev": "micro-dev -i README.md"
   },
   "keywords": [
