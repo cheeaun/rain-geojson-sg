@@ -118,6 +118,18 @@ const parsePNG = (body) => new Promise((resolve, reject) => {
   });
 });
 
+const grabGeoJSON = async (dt) => {
+  const image = await fetchImage(dt);
+  if (image.headers['content-type'] !== 'image/png'){
+    throw new Error('Radar image is not a PNG image.');
+  }
+  const data = await parsePNG(image.body);
+  const geojson = convertPNG2GeoJSON(data, cachedDt);
+  const geojsonStr = JSON.stringify(geojson);
+  console.log('GeoJSON generated', dt);
+  return geojsonStr;
+}
+
 let cachedDt;
 let geoJSONCache = '';
 const getGeoJSON = async () => {
@@ -185,6 +197,24 @@ module.exports = cors(async (req, res) => {
     case '/favicon.ico':
       res.setHeader('content-type', 'image/x-icon');
       res.end();
+      break;
+    case '/rainarea':
+      const { datetime } = query;
+      if (/\d{11}[05]/.test(datetime)){
+        try {
+          const data = await grabGeoJSON(datetime);
+          res.setHeader('content-type', 'application/json');
+          res.setHeader('content-length', data.length);
+          res.setHeader('cache-control', 'public, max-age=31536000'); // 1 year
+          res.end(data);
+        } catch (e) {
+          res.statusCode = 404;
+          res.end('Radar image not found.');
+        }
+      } else {
+        res.statusCode = 400;
+        res.end('Invalid request. `datetime` query is required as a 12-digit YYYYMMDDHHMM string. Last MM is in 5-minute intervals. Timezone in SGT.');
+      }
       break;
     case '/now':
       const data = geoJSONCache || await getGeoJSON();
