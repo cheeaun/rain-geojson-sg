@@ -165,7 +165,8 @@ const getGeoJSON = async () => {
   return geoJSONCache;
 };
 getGeoJSON();
-setInterval(getGeoJSON, 30 * 1000); // every half minute
+const geojsonInt = setInterval(getGeoJSON, 30 * 1000); // every half minute
+process.on('exit', () => clearInterval(geojsonInt));
 
 const stations = {};
 (async () => {
