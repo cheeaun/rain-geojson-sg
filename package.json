@@ -4,7 +4,7 @@
   "description": "Straight-forward API server to convert rain area radar images (Singapore) to GeoJSON",
   "main": "index.js",
   "engines": {
-    "node": "stable"
+    "node": ">8.0.0"
   },
   "dependencies": {
     "@turf/helpers": "~6.1.4",
