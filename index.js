@@ -187,12 +187,16 @@ module.exports = cors(async (req, res) => {
 
   switch (pathname) {
     case '/':
+      const memoryUsage = process.memoryUsage();
+      const used = memoryUsage.heapUsed / 1024 / 1024;
       res.setHeader('content-type', 'application/json');
       res.end(JSON.stringify({
         repo: 'https://github.com/cheeaun/rain-geojson-sg',
         author: 'Lim Chee Aun',
         process: {
           version: process.versions,
+          memoryUsageReadable: `${Math.round(used * 100) / 100} MB`,
+          memoryUsage,
         },
       }));
       break;
