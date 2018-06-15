@@ -193,6 +193,9 @@ module.exports = cors(async (req, res) => {
       res.end(JSON.stringify({
         repo: 'https://github.com/cheeaun/rain-geojson-sg',
         author: 'Lim Chee Aun',
+        process: {
+          version: process.versions,
+        },
       }));
       break;
     case '/favicon.ico':
