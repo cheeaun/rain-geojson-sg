@@ -124,7 +124,7 @@ const grabGeoJSON = async (dt) => {
     throw new Error('Radar image is not a PNG image.');
   }
   const data = await parsePNG(image.body);
-  const geojson = convertPNG2GeoJSON(data, cachedDt);
+  const geojson = convertPNG2GeoJSON(data, dt);
   const geojsonStr = JSON.stringify(geojson);
   console.log('GeoJSON generated', dt);
   return geojsonStr;
