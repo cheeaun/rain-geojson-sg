@@ -6,7 +6,6 @@ const PNG = require('pngjs').PNG;
 const { featureCollection, polygon, multiPolygon, round } = require('@turf/helpers');
 const rewind = require('geojson-rewind');
 const polygonClipping = require('polygon-clipping');
-const zlib = require('zlib');
 const rgbHex = require('rgb-hex');
 
 // Rain area center and boundaries
@@ -159,8 +158,7 @@ const getGeoJSON = async () => {
 
   const data = await parsePNG(image.body);
   const geojson = convertPNG2GeoJSON(data, cachedDt);
-  const geojsonStr = JSON.stringify(geojson);
-  geoJSONCache = zlib.gzipSync(geojsonStr);
+  geoJSONCache = JSON.stringify(geojson);
   console.log('GeoJSON cached', dt);
   return geoJSONCache;
 };
@@ -223,7 +221,6 @@ module.exports = cors(async (req, res) => {
     case '/now':
       const data = geoJSONCache || await getGeoJSON();
       res.setHeader('content-type', 'application/json');
-      res.setHeader('content-encoding', 'gzip');
       res.setHeader('content-length', data.length);
       res.setHeader('cache-control', `public, max-age=60, s-maxage=${proxyMaxAge}`);
       res.end(data);
