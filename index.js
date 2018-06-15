@@ -281,5 +281,9 @@ module.exports = cors(async (req, res) => {
         });
       } catch(e) {}
       res.end(lastObservations[compact] || '');
+      break;
+    default:
+      res.statusCode = 404;
+      res.end('404.');
   }
 });
