@@ -133,7 +133,7 @@ let cachedDt;
 let geoJSONCache = '';
 const getGeoJSON = async () => {
   let dt = datetimeStr();
-  if (dt === cachedDt) return;
+  if (dt === cachedDt) return geoJSONCache;
 
   let image;
   try {
@@ -223,14 +223,14 @@ module.exports = cors(async (req, res) => {
       }
       break;
     case '/now':
-      const data = geoJSONCache || await getGeoJSON();
+      const data = await getGeoJSON();
       res.setHeader('content-type', 'application/json');
       res.setHeader('content-length', data.length);
       res.setHeader('cache-control', `public, max-age=60, s-maxage=${proxyMaxAge}`);
       res.end(data);
       break;
     case '/now-id':
-      await geoJSONCache || getGeoJSON();
+      await getGeoJSON();
       res.setHeader('content-type', 'text/plain');
       if (cachedDt){
         res.setHeader('cache-control', `public, max-age=60, s-maxage=${proxyMaxAge}`);
