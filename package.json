@@ -9,12 +9,12 @@
   "dependencies": {
     "@turf/helpers": "~6.1.4",
     "geojson-rewind": "^0.3.1",
-    "got": "~8.3.1",
-    "micro": "~9.3.1",
+    "got": "~9.0.0",
+    "micro": "~9.3.3",
     "micro-cors": "~0.1.0",
     "nearest-color": "^0.4.2",
     "pngjs": "~3.3.3",
-    "polygon-clipping": "~0.6.1",
+    "polygon-clipping": "~0.7.0",
     "rgb-hex": "~2.1.0"
   },
   "devDependencies": {
@@ -22,7 +22,8 @@
   },
   "scripts": {
     "start": "micro -p ${PORT-3000}",
-    "dev": "micro-dev -i README.md"
+    "dev": "micro-dev -i README.md",
+    "deploy": "gcloud app deploy --project rain-geojson-sg"
   },
   "keywords": [
     "rain",
