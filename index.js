@@ -100,28 +100,44 @@ function convertPNG2GeoJSON(png, id){
   return fc;
 };
 
+const fetchImage2GeoJSON = (dt) => new Promise((resolve, reject) => {
+  const url = `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`;
+  console.log(`➡️ ${url}`);
+  let imgReq;
+  const imgStream = got.stream(url, { encoding: null })
+    .on('error', (e) => {
+      if (e.statusCode == 404){
+        reject(new Error('Page not found'));
+      } else {
+        console.error(e);
+        reject(e);
+      }
+    })
+    .on('request', (req) => imgReq = req)
+    .on('response', (msg) => {
+      if (msg.headers['content-type'] !== 'image/png'){
+        imgReq && imgReq.abort();
+        const e = new Error('Radar image is not a PNG image.');
+        console.error(e);
+        reject(e);
+      }
+    })
+    .pipe(new PNG({
+      checkCRC: false,
+    }))
+    .on('parsed', function(){
+      resolve(this);
+    });
+});
+
 function fetchImage(dt){
   const url = `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`;
   console.log(`➡️ ${url}`);
   return got(url, { encoding: null });
 }
 
-const parsePNG = (body) => new Promise((resolve, reject) => {
-  new PNG().parse(body, (e, data) => {
-    if (e){
-      reject(e);
-      return;
-    }
-    resolve(data);
-  });
-});
-
 const grabGeoJSON = async (dt) => {
-  const image = await fetchImage(dt);
-  if (image.headers['content-type'] !== 'image/png'){
-    throw new Error('Radar image is not a PNG image.');
-  }
-  const data = await parsePNG(image.body);
+  const data = await fetchImage2GeoJSON(dt);
   const geojson = convertPNG2GeoJSON(data, dt);
   const geojsonStr = JSON.stringify(geojson);
   console.log('GeoJSON generated', dt);
@@ -134,28 +150,23 @@ const getGeoJSON = async () => {
   let dt = datetimeStr();
   if (dt === cachedDt) return geoJSONCache;
 
-  let image;
+  let data;
   try {
-    image = await fetchImage(dt);
+    data = await fetchImage2GeoJSON(dt);
   } catch(e) {
     // Retry with older radar image
     dt = datetimeStr(-5);
     // If older radar image is already cached, return immediately
     if (dt === cachedDt) return geoJSONCache;
     try {
-      image = await fetchImage(dt);
+      data = await fetchImage2GeoJSON(dt);
     } catch(e) {
       return geoJSONCache;
     }
   }
 
-  if (image.headers['content-type'] !== 'image/png'){
-    return geoJSONCache;
-  }
-
   cachedDt = dt;
 
-  const data = await parsePNG(image.body);
   const geojson = convertPNG2GeoJSON(data, cachedDt);
   geoJSONCache = JSON.stringify(geojson);
   console.log('GeoJSON cached', dt);
