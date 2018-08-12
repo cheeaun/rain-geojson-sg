@@ -1,4 +1,3 @@
-const fs = require('fs');
 const cors = require('micro-cors')();
 const url = require('url');
 const got = require('got');
