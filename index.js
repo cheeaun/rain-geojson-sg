@@ -255,41 +255,48 @@ module.exports = cors(async (req, res) => {
       res.setHeader('content-type', 'application/json');
       res.setHeader('cache-control', 'public, max-age=60');
       try {
-        const { body } = await got(dataURL, { json: true, cache: observationsCache });
-        let features = Object.entries(body.data.station).map(([id, values]) => {
-          const { name, lat, long } = stations[id];
-          for (let k in values){
-            const v = values[k];
-            const n = Number(v);
-            values[k] = !isNaN(n) ? n : v;
-          };
-          return {
-            type: 'Feature',
-            properties: {
-              id,
-              name,
-              ...values,
-            },
-            geometry: {
-              type: 'Point',
-              coordinates: [long, lat].map(Number),
-            },
-          };
-        });
-        if (compact){
-          features = features.map(f => {
-            const { rain_mm, temp_celcius, relative_humidity, wind_direction } = f.properties;
-            f.properties = { temp_celcius, relative_humidity, wind_direction };
-            if (rain_mm) f.properties.rain_mm = rain_mm;
-            return f;
-          }).filter(f => {
-            return Object.values(f.properties).some(v => typeof v === 'number' && v > 0);
+        const { body, fromCache } = await got(dataURL, { json: true, cache: observationsCache });
+        if (!fromCache || !lastObservations[compact]){
+          const features = [];
+          Object.entries(body.data.station).forEach(([id, values]) => {
+            const { name, lat, long } = stations[id];
+            const props = {};
+            for (let k in values){
+              const v = values[k];
+              const nv = isNaN(v) ? v : Number(v);
+              if (!compact || (compact && /rain|temp|humidity|wind_direction/i.test(k) && nv)){
+                props[k] = nv;
+              }
+            };
+            if (!compact){
+              features.push({
+                type: 'Feature',
+                properties: {
+                  id,
+                  name,
+                  ...props,
+                },
+                geometry: {
+                  type: 'Point',
+                  coordinates: [long, lat].map(Number),
+                },
+              });
+            } else if (compact && Object.keys(props).length){
+              features.push({
+                type: 'Feature',
+                properties: props,
+                geometry: {
+                  type: 'Point',
+                  coordinates: [long, lat].map(Number),
+                },
+              });
+            }
+          });
+          lastObservations[compact] = JSON.stringify({
+            type: 'FeatureCollection',
+            features,
           });
         }
-        lastObservations[compact] = JSON.stringify({
-          type: 'FeatureCollection',
-          features,
-        });
       } catch(e) {}
       res.end(lastObservations[compact] || '');
       break;
