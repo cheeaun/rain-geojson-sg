@@ -174,7 +174,7 @@ const getGeoJSON = async () => {
 };
 getGeoJSON();
 const geojsonInt = setInterval(getGeoJSON, 30 * 1000); // every half minute
-process.on('beforeExit', () => clearInterval(geojsonInt));
+process.on('SIGINT', () => clearInterval(geojsonInt));
 
 const stations = {};
 (async () => {
