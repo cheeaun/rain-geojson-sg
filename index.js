@@ -4,7 +4,7 @@ const got = require('got');
 const PNG = require('pngjs').PNG;
 const { featureCollection, polygon, multiPolygon, round } = require('@turf/helpers');
 const rewind = require('geojson-rewind');
-const polygonClipping = require('polygon-clipping');
+const { union } = require('polygon-clipping');
 const rgbHex = require('rgb-hex');
 
 // Rain area center and boundaries
@@ -84,7 +84,7 @@ function convertPNG2GeoJSON(png, id){
 
   for (const key in polygonsByColor){
     const allP = polygonsByColor[key];
-    const unionP = polygonClipping.union(...allP);
+    const unionP = union(...allP);
     const [r, g, b] = key.split(',').map(Number);
     const mp = multiPolygon(unionP, {
       color: '#' + rgbHex(r, g, b),
