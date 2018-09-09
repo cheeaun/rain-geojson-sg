@@ -6,6 +6,7 @@ const { featureCollection, polygon, multiPolygon, round } = require('@turf/helpe
 const rewind = require('geojson-rewind');
 const { union } = require('polygon-clipping');
 const rgbHex = require('rgb-hex');
+const { Feed } = require('feed');
 
 // Rain area center and boundaries
 const lowerLat = 1.156, upperLat = 1.475, lowerLong = 103.565, upperLong = 104.130;
@@ -40,10 +41,12 @@ function datetimeStr(customMinutes){
   return Math.floor(d/5)*5;
 };
 
+let coverage = 0;
 function convertPNG2GeoJSON(png, id){
   const { width, height, data } = png;
   const polygons = [];
   const polygonsByColor = {};
+  let colorsCount = 0;
 
   for (let y=0; y<height; y++) {
     for (let x=0; x<width; x++) {
@@ -78,9 +81,13 @@ function convertPNG2GeoJSON(png, id){
         if (!polygonsByColor[key]) polygonsByColor[key] = [];
         polygonsByColor[key].push(p);
         // polygons.push(p);
+
+        colorsCount++;
       }
     }
   }
+
+  coverage = (colorsCount / (width * height)) * 100;
 
   for (const key in polygonsByColor){
     const allP = polygonsByColor[key];
@@ -299,6 +306,24 @@ module.exports = cors(async (req, res) => {
         }
       } catch(e) {}
       res.end(lastObservations[compact] || '');
+      break;
+    case '/feed':
+      const date = new Date();
+      const feed = new Feed({
+        title: 'Rain GeoJSON SG',
+        id: 'rain-geojson-sg',
+      });
+      if (coverage > 10){
+        feed.addItem({
+          title: `Rain coverage ${coverage}%: ${coverage > 50 ? 'RAINING' : 'SUNNY'}`,
+          id: (+new Date()),
+          link: 'https://checkweather.sg',
+          date,
+        });
+        res.setHeader('content-type', 'application/atom+xml');
+        res.setHeader('cache-control', 'public, max-age=3600');
+        res.end(feed.atom1());
+      }
       break;
     default:
       res.statusCode = 404;
