@@ -320,10 +320,10 @@ module.exports = cors(async (req, res) => {
           link: 'https://checkweather.sg',
           date,
         });
-        res.setHeader('content-type', 'application/atom+xml');
-        res.setHeader('cache-control', 'public, max-age=3600');
-        res.end(feed.atom1());
       }
+      res.setHeader('content-type', 'application/atom+xml');
+      res.setHeader('cache-control', 'public, max-age=3600');
+      res.end(feed.atom1());
       break;
     default:
       res.statusCode = 404;
