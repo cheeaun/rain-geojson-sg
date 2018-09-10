@@ -308,6 +308,7 @@ module.exports = cors(async (req, res) => {
       res.end(lastObservations[compact] || '');
       break;
     case '/feed':
+      console.log(`Coverage: ${coverage}%`);
       const date = new Date();
       const feed = new Feed({
         title: 'Rain GeoJSON SG',
@@ -315,7 +316,7 @@ module.exports = cors(async (req, res) => {
       });
       if (coverage > 10){
         feed.addItem({
-          title: `Rain coverage ${coverage}%: ${coverage > 50 ? 'RAINING' : 'SUNNY'}`,
+          title: `${'🌧'.repeat(Math.ceil(coverage/20))} Rain coverage ${coverage.toFixed(2)}%`,
           id: (+new Date()),
           link: 'https://checkweather.sg',
           date,
