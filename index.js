@@ -132,6 +132,10 @@ const fetchImage2GeoJSON = (dt) => new Promise((resolve, reject) => {
     .pipe(new PNG({
       checkCRC: false,
     }))
+    .on('error', (e) => {
+      console.error(e);
+      reject(e);
+    })
     .on('parsed', function(){
       resolve(this);
     });
