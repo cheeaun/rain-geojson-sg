@@ -1,0 +1,7 @@
+{
+  "name": "rainshot",
+  "version": "0.0.1",
+  "dependencies": {
+    "puppeteer": "~1.8.0"
+  }
+}
