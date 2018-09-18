@@ -33,16 +33,5 @@
     "humidity"
   ],
   "author": "Lim Chee Aun",
-  "license": "MIT",
-  "now": {
-    "alias": [
-      "rain-geojson-sg.now.sh",
-      "api.checkweather.sg"
-    ],
-    "files": [
-      "index.js",
-      "package.json",
-      "package-lock.json"
-    ]
-  }
+  "license": "MIT"
 }

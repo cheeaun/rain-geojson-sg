@@ -1,0 +1,11 @@
+{
+  "alias": [
+    "rain-geojson-sg.now.sh",
+    "api.checkweather.sg"
+  ],
+  "files": [
+    "index.js",
+    "package.json",
+    "package-lock.json"
+  ]
+}
