@@ -23,7 +23,6 @@ async function getBrowserPage() {
     waitUntil: 'networkidle0',
   });
   await p.waitForFunction("$map.queryRenderedFeatures({layers: ['tempreadings']}).length > 0");
-  await p.waitForFunction("$map.queryRenderedFeatures({layers: ['humidreadings']}).length > 0");
   await p.waitForFunction("$map.queryRenderedFeatures({layers: ['windirections']}).length > 0");
 
   return Promise.resolve(p);
