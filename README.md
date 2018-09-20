@@ -36,4 +36,5 @@ Copyright/License
 ---
 
 - Rain area radar images © [Meteorological Service Singapore](http://www.weather.gov.sg/) © [National Environment Agency](http://www.nea.gov.sg/)
+- [Singapore region boundary](https://data.gov.sg/dataset/master-plan-2014-region-boundary-web), under [Singapore Open Data License](https://data.gov.sg/open-data-licence)
 - Code under [MIT](https://cheeaun.mit-license.org/).

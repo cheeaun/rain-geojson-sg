@@ -2,11 +2,15 @@ const cors = require('micro-cors')();
 const url = require('url');
 const got = require('got');
 const PNG = require('pngjs').PNG;
+const area = require('@turf/area').default;
+const intersect = require('@turf/intersect').default;
 const { featureCollection, polygon, multiPolygon, round } = require('@turf/helpers');
 const rewind = require('geojson-rewind');
 const { union } = require('polygon-clipping');
 const rgbHex = require('rgb-hex');
 const { Feed } = require('feed');
+
+const boundaryFeature = JSON.parse(require('fs').readFileSync('./sg-region-boundary.json'));
 
 // Rain area center and boundaries
 const lowerLat = 1.156, upperLat = 1.475, lowerLong = 103.565, upperLong = 104.130;
@@ -42,6 +46,7 @@ function datetimeStr(customMinutes){
 };
 
 let coverage = 0;
+let sgCoverage = 0;
 function convertPNG2GeoJSON(png, id){
   const { width, height, data } = png;
   const polygons = [];
@@ -104,6 +109,23 @@ function convertPNG2GeoJSON(png, id){
     bbox: [lowerLong, lowerLat, upperLong, upperLat],
     id,
   }));
+
+  const oneWholePolygon = multiPolygon(polygons.length ? union(...polygons.map(p => p.geometry.coordinates)) : []);
+  let boundaryArea = 0, sgArea = 0;
+  boundaryFeature.features.forEach(feature => {
+    boundaryArea += area(feature);
+    const intersectArea = intersect(feature, oneWholePolygon);
+    if (intersectArea) sgArea += area(intersectArea);
+    // const { name } = feature.properties;
+    // if (intersectArea) {
+    //   console.log(name, area(intersectArea)/area(feature)*100, '%');
+    // } else {
+    //   console.log(name, 'NOT INTERSECTING');
+    // }
+  });
+  sgCoverage = sgArea/boundaryArea*100;
+  console.log(`Coverage: ${sgCoverage.toFixed(2)}% / ${coverage.toFixed(2)}%`);
+
   return fc;
 };
 
@@ -320,9 +342,10 @@ module.exports = cors(async (req, res) => {
         title: 'Rain GeoJSON SG',
         id: 'rain-geojson-sg',
       });
-      if (coverage > 10){
+      if (sgCoverage > 5){
         feed.addItem({
-          title: `${'🌧'.repeat(Math.ceil(coverage/20))} Rain coverage ${coverage.toFixed(2)}%`,
+          title: `${'🌧'.repeat(Math.ceil(coverage/20))} Rain coverage: ${coverage.toFixed(2)}%`,
+          description: `Rain coverage over Singapore: ${sgCoverage.toFixed(2)}%`,
           id: cachedDt || (+date),
           link: 'https://checkweather.sg',
           date,
