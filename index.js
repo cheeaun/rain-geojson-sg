@@ -324,6 +324,7 @@ module.exports = cors(async (req, res) => {
         feed.addItem({
           title: `${'🌧'.repeat(Math.ceil(coverage/20))} Rain coverage ${coverage.toFixed(2)}%`,
           id: (+new Date()),
+          id: cachedDt || (+date),
           link: 'https://checkweather.sg',
           date,
         });
