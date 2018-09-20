@@ -5,6 +5,7 @@
   ],
   "files": [
     "index.js",
+    "sg-region-boundary.json",
     "package.json",
     "package-lock.json"
   ]
