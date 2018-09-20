@@ -314,7 +314,7 @@ module.exports = cors(async (req, res) => {
       res.end(lastObservations[compact] || '');
       break;
     case '/feed':
-      console.log(`Coverage: ${coverage}%`);
+      console.log(`Feed request from: ${req.headers['user-agent']}`);
       const date = new Date();
       const feed = new Feed({
         title: 'Rain GeoJSON SG',
