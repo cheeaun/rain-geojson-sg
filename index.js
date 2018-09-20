@@ -107,9 +107,11 @@ function convertPNG2GeoJSON(png, id){
   return fc;
 };
 
+let prevURL = '';
 const fetchImage2GeoJSON = (dt) => new Promise((resolve, reject) => {
   const url = `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`;
-  console.log(`➡️ ${url}`);
+  console.log(url !== prevURL ? `➡️  ${url}` : '♻️');
+  prevURL = url;
   let imgReq;
   const imgStream = got.stream(url, { encoding: null })
     .on('error', (e) => {
