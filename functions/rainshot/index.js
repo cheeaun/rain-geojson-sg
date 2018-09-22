@@ -31,8 +31,7 @@ async function getBrowserPage() {
 exports.rainshot = async (req, res) => {
   if (!page) page = await getBrowserPage();
 
-  await page.waitForSelector('#datetime:not([hidden]) blink');
-  await page.waitForSelector('#loader[hidden]');
+  await page.waitForSelector('#datetime:not([hidden])');
 
   const imageBuffer = await page.screenshot({
     type: 'jpeg',
