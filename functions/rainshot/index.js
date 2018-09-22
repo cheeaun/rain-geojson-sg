@@ -4,8 +4,8 @@ let page;
 async function getBrowserPage() {
   const browser = await puppeteer.launch({
     defaultViewport: {
-      width: 640,
-      height: 361,
+      width: 800,
+      height: 452,
       isLandscape: true,
     },
     args: [
