@@ -29,11 +29,38 @@ async function getBrowserPage() {
   return Promise.resolve(p);
 }
 
+function getMinutes(timestamp){
+  // Don't care about AM/PM at all
+  const [hour, min] = timestamp.split(':');
+  return hour * 60 + min;
+};
+
 exports.rainshot = async (req, res) => {
   if (!page) page = await getBrowserPage();
 
   await page.waitForSelector('#datetime:not([hidden])');
   await page.waitForSelector('#datetime:not([hidden]) blink');
+
+  const [time, localTime] = await page.evaluate(() => {
+    const time = document.getElementById('datetime').innerText.match(/^\d+\:\d\d/i)[0];
+    const localTime = new Date().toLocaleTimeString('en-US', { timeZone: 'Asia/Singapore' }).match(/^\d+\:\d\d/i)[0];
+    return [time, localTime];
+  });
+
+  console.log(time, localTime);
+
+  const minutes = getMinutes(time);
+  const localMinutes = getMinutes(localTime);
+  if (localMinutes - minutes > 10){
+    // Reload page if timing is too overly off
+    await page.reload({
+      waitUntil: 'networkidle0',
+    });
+    await page.waitForFunction("$map.queryRenderedFeatures({layers: ['tempreadings']}).length > 0");
+    await page.waitForFunction("$map.queryRenderedFeatures({layers: ['windirections']}).length > 0");
+    await page.waitForSelector('#datetime:not([hidden])');
+    await page.waitForSelector('#datetime:not([hidden]) blink');
+  }
 
   const imageBuffer = await page.screenshot({
     type: 'jpeg',
