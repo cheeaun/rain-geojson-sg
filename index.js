@@ -205,6 +205,13 @@ const getGeoJSON = async () => {
   const geojson = convertPNG2GeoJSON(data, cachedDt);
   geoJSONCache = JSON.stringify(geojson);
   console.log('GeoJSON cached', dt);
+
+  setTimeout(() => {
+    const url = `https://api.checkweather.sg/rainarea?datetime=${dt}`;
+    console.log(`⚡️ ${url}`);
+    got(url);
+  }, 100);
+
   return geoJSONCache;
 };
 getGeoJSON();
