@@ -245,6 +245,9 @@ module.exports = cors(async (req, res) => {
       res.end(JSON.stringify({
         repo: 'https://github.com/cheeaun/rain-geojson-sg',
         author: 'Lim Chee Aun',
+        data: {
+          datetime: cachedDt,
+        },
         process: {
           version: process.versions,
           memoryUsageReadable: `${Math.round(used * 100) / 100} MB`,
