@@ -172,6 +172,7 @@ function fetchImage(dt){
 }
 
 const grabGeoJSON = async (dt) => {
+  if (dt === cachedDt) return geoJSONCache;
   const data = await fetchImage2GeoJSON(dt);
   const geojson = convertPNG2GeoJSON(data, dt);
   const geojsonStr = JSON.stringify(geojson);
