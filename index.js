@@ -52,10 +52,15 @@ function convertPNG2GeoJSON(png, id){
   const polygons = [];
   const polygonsByColor = {};
   let colorsCount = 0;
+  const dataCache = { id, data: [] };
 
   for (let y=0; y<height; y++) {
+    dataCache.data.push([]);
     for (let x=0; x<width; x++) {
       const idx = (width * y + x) << 2;
+      const r = data[idx];
+      const g = data[idx+1];
+      const b = data[idx+2];
       const alpha = data[idx+3];
       const hasColor = alpha > 0;
       if (hasColor){
@@ -64,7 +69,7 @@ function convertPNG2GeoJSON(png, id){
         const lLat = round(upperLat - (y/height*distanceLat), 4);
         const uLat = round(upperLat - ((y+1)/height*distanceLat), 4);
 
-        const key = data[idx] + ',' + data[idx+1] + ',' + data[idx+2];
+        const key = `${r},${g},${b}`;
 
         // const p = polygon([[
         //   [lLong, uLat],
@@ -89,6 +94,8 @@ function convertPNG2GeoJSON(png, id){
 
         colorsCount++;
       }
+
+      dataCache.data[y].push(hasColor ? getIntensity({r, g, b}) : 0);
     }
   }
 
@@ -126,11 +133,11 @@ function convertPNG2GeoJSON(png, id){
   sgCoverage = sgArea/boundaryArea*100;
   console.log(`Coverage: ${sgCoverage.toFixed(2)}% / ${coverage.toFixed(2)}%`);
 
-  return fc;
+  return [fc, dataCache];
 };
 
 let prevURL = '';
-const fetchImage2GeoJSON = (dt) => new Promise((resolve, reject) => {
+const fetchImage = (dt) => new Promise((resolve, reject) => {
   const url = `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`;
   console.log(url !== prevURL ? `➡️  ${url}` : '♻️');
   prevURL = url;
@@ -165,55 +172,52 @@ const fetchImage2GeoJSON = (dt) => new Promise((resolve, reject) => {
     });
 });
 
-function fetchImage(dt){
-  const url = `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`;
-  console.log(`➡️ ${url}`);
-  return got(url, { encoding: null });
-}
+// function fetchImage(dt){
+//   const url = `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`;
+//   console.log(`➡️ ${url}`);
+//   return got(url, { encoding: null });
+// }
 
 const grabGeoJSON = async (dt) => {
   if (dt === cachedDt) return geoJSONCache;
-  const data = await fetchImage2GeoJSON(dt);
-  const geojson = convertPNG2GeoJSON(data, dt);
+  const img = await fetchImage(dt);
+  const [ geojson, data ] = convertPNG2GeoJSON(img, dt);
   const geojsonStr = JSON.stringify(geojson);
+  const dataStr = JSON.stringify(data);
   console.log('GeoJSON generated', dt);
-  return geojsonStr;
+  return [geojsonStr, dataStr];
 }
 
 let cachedDt;
 let geoJSONCache = '';
+let dataCache = '';
 const getGeoJSON = async () => {
   let dt = datetimeStr();
-  if (dt === cachedDt) return geoJSONCache;
+  if (dt === cachedDt) return [geoJSONCache, dataCache];
 
-  let data;
+  let img;
   try {
-    data = await fetchImage2GeoJSON(dt);
+    img = await fetchImage(dt);
   } catch(e) {
     // Retry with older radar image
     dt = datetimeStr(-5);
     // If older radar image is already cached, return immediately
-    if (dt === cachedDt) return geoJSONCache;
+    if (dt === cachedDt) return [geoJSONCache, dataCache];
     try {
-      data = await fetchImage2GeoJSON(dt);
+      img = await fetchImage(dt);
     } catch(e) {
-      return geoJSONCache;
+      return [geoJSONCache, dataCache];
     }
   }
 
   cachedDt = dt;
 
-  const geojson = convertPNG2GeoJSON(data, cachedDt);
+  const [ geojson, data ] = convertPNG2GeoJSON(img, cachedDt);
   geoJSONCache = JSON.stringify(geojson);
+  dataCache = JSON.stringify(data);
   console.log('GeoJSON cached', dt);
 
-  setTimeout(() => {
-    const url = `https://api.checkweather.sg/rainarea?datetime=${dt}`;
-    console.log(`⚡️ ${url}`);
-    got(url);
-  }, 100);
-
-  return geoJSONCache;
+  return [geoJSONCache, dataCache];
 };
 getGeoJSON();
 const geojsonInt = setInterval(getGeoJSON, 30 * 1000); // every half minute
@@ -238,6 +242,8 @@ module.exports = cors(async (req, res) => {
   const ageDiff = datetimeNowStr() - cachedDt;
   const proxyMaxAge = Math.max(0, (5 - ageDiff)) * 60;
 
+  const { json } = query;
+
   switch (pathname) {
     case '/':
       const memoryUsage = process.memoryUsage();
@@ -260,15 +266,16 @@ module.exports = cors(async (req, res) => {
       res.setHeader('content-type', 'image/x-icon');
       res.end();
       break;
-    case '/rainarea':
+    case '/rainarea': {
       const { datetime } = query;
       if (/\d{11}[05]/.test(datetime)){
         try {
-          const data = await grabGeoJSON(datetime);
+          const [geojson, data] = await grabGeoJSON(datetime);
+          let response = !!json ? data : geojson;
           res.setHeader('content-type', 'application/json');
-          res.setHeader('content-length', data.length);
+          res.setHeader('content-length', response.length);
           res.setHeader('cache-control', 'public, max-age=31536000'); // 1 year
-          res.end(data);
+          res.end(response);
         } catch (e) {
           res.statusCode = 404;
           res.end('Radar image not found.');
@@ -278,13 +285,16 @@ module.exports = cors(async (req, res) => {
         res.end('Invalid request. `datetime` query is required as a 12-digit YYYYMMDDHHMM string. Last MM is in 5-minute intervals. Timezone in SGT.');
       }
       break;
-    case '/now':
-      const data = await getGeoJSON();
+    }
+    case '/now': {
+      const [geojson, data] = await getGeoJSON();
+      const response = !!json ? data : geojson;
       res.setHeader('content-type', 'application/json');
-      res.setHeader('content-length', data.length);
+      res.setHeader('content-length', response.length);
       res.setHeader('cache-control', `public, max-age=60, s-maxage=${proxyMaxAge}`);
-      res.end(data);
+      res.end(response);
       break;
+    }
     case '/now-id':
       await getGeoJSON();
       res.setHeader('content-type', 'text/plain');
