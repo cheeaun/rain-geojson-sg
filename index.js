@@ -190,7 +190,7 @@ const grabGeoJSON = async (dt) => {
 
 let cachedDt;
 let geoJSONCache = '';
-let dataCache = '';
+let dataCache = {};
 const getGeoJSON = async () => {
   let dt = datetimeStr();
   if (dt === cachedDt) return [geoJSONCache, dataCache];
@@ -214,7 +214,7 @@ const getGeoJSON = async () => {
 
   const [ geojson, data ] = convertPNG2GeoJSON(img, cachedDt);
   geoJSONCache = JSON.stringify(geojson);
-  dataCache = JSON.stringify(data);
+  dataCache = data;
   console.log('GeoJSON cached', dt);
 
   return [geoJSONCache, dataCache];
@@ -237,12 +237,22 @@ let lastObservations = {};
 
 const dataURL = 'http://www.weather.gov.sg/mobile/json/rest-get-latest-observation-for-all-locs.json';
 
+const formatAscii = ({ id, data }) => {
+  return id + '\n' + data.map(y => {
+    let text = '';
+    y.forEach(x => {
+      text += x ? String.fromCharCode(x+33) : ' ';
+    });
+    return text.trimEnd();
+  }).join('\n');
+};
+
 module.exports = cors(async (req, res) => {
   const { pathname, query } = url.parse(req.url, true);
   const ageDiff = datetimeNowStr() - cachedDt;
   const proxyMaxAge = Math.max(0, (5 - ageDiff)) * 60;
 
-  const { json } = query;
+  const { json, ascii } = query;
 
   switch (pathname) {
     case '/':
@@ -271,8 +281,8 @@ module.exports = cors(async (req, res) => {
       if (/\d{11}[05]/.test(datetime)){
         try {
           const [geojson, data] = await grabGeoJSON(datetime);
-          let response = !!json ? data : geojson;
-          res.setHeader('content-type', 'application/json');
+          const response = !ascii ? (!!json ? JSON.stringify(data) : geojson) : formatAscii(data);
+          res.setHeader('content-type', !ascii ? 'application/json' : 'text/plain');
           res.setHeader('content-length', response.length);
           res.setHeader('cache-control', 'public, max-age=31536000'); // 1 year
           res.end(response);
@@ -288,8 +298,8 @@ module.exports = cors(async (req, res) => {
     }
     case '/now': {
       const [geojson, data] = await getGeoJSON();
-      const response = !!json ? data : geojson;
-      res.setHeader('content-type', 'application/json');
+      const response = !ascii ? (!!json ? JSON.stringify(data) : geojson) : formatAscii(data);
+      res.setHeader('content-type', !ascii ? 'application/json' : 'text/plain');
       res.setHeader('content-length', response.length);
       res.setHeader('cache-control', `public, max-age=60, s-maxage=${proxyMaxAge}`);
       res.end(response);
