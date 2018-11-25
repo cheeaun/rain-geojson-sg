@@ -1,7 +1,6 @@
 {
   "alias": [
-    "rain-geojson-sg.now.sh",
-    "api.checkweather.sg"
+    "rain-geojson-sg.now.sh"
   ],
   "files": [
     "index.js",
