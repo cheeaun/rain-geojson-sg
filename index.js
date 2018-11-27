@@ -390,7 +390,7 @@ module.exports = cors(async (req, res) => {
         });
       }
       res.setHeader('content-type', 'application/atom+xml');
-      res.setHeader('cache-control', 'public, max-age=120');
+      res.setHeader('cache-control', 'public, max-age=600');
       res.end(feed.atom1());
       break;
     default:
