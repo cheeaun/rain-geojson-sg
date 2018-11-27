@@ -45,6 +45,12 @@ function datetimeStr(customMinutes){
   return Math.floor(d/5)*5;
 };
 
+function getDateFromStr(str){
+  const dateNums = `${str}`.match(/(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})/).slice(1).map(Number);
+  const [year, month, ...rest] = dateNums;
+  return new Date(year, month-1, ...rest);
+};
+
 let coverage = 0;
 let sgCoverage = 0;
 function convertPNG2GeoJSON(png, id){
@@ -368,16 +374,17 @@ module.exports = cors(async (req, res) => {
       break;
     case '/feed':
       console.log(`Feed request from: ${req.headers['user-agent']}`);
-      const date = new Date();
+      const date = getDateFromStr(cachedDt);
       const feed = new Feed({
         title: 'Rain GeoJSON SG',
         id: 'rain-geojson-sg',
+        updated: date,
       });
-      if (sgCoverage > 5){
+      if (sgCoverage > 5 && cachedDt){
         feed.addItem({
           title: `${'🌧'.repeat(Math.ceil(coverage/20))} Rain coverage: ${coverage.toFixed(2)}%`,
           description: `Rain coverage over Singapore: ${sgCoverage.toFixed(2)}%`,
-          id: cachedDt || (+date),
+          id: cachedDt,
           link: 'https://checkweather.sg',
           date,
         });
