@@ -233,7 +233,6 @@ const stations = {};
 (async () => {
   const stationsURL = 'http://www.weather.gov.sg/mobile/json/rest-get-all-climate-stations.json';
   const { body } = await got(stationsURL, { json: true });
-  const stationMaps = {};
   body.data.forEach(d => {
     stations[d.id] = d;
   });
