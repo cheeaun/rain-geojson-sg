@@ -252,6 +252,8 @@ const formatAscii = ({ id, data }) => {
   }).join('\n');
 };
 
+let feedCache;
+
 module.exports = cors(async (req, res) => {
   const { pathname, query } = url.parse(req.url, true);
   const ageDiff = datetimeNowStr() - cachedDt;
@@ -373,24 +375,30 @@ module.exports = cors(async (req, res) => {
       break;
     case '/feed':
       console.log(`Feed request from: ${req.headers['user-agent']}`);
-      const date = getDateFromStr(cachedDt);
-      const feed = new Feed({
-        title: 'Rain GeoJSON SG',
-        id: 'rain-geojson-sg',
-        updated: date,
-      });
-      if (sgCoverage > 5 && cachedDt){
-        feed.addItem({
-          title: `${'🌧'.repeat(Math.ceil(coverage/20))} Rain coverage: ${coverage.toFixed(2)}%`,
-          description: `Rain coverage over Singapore: ${sgCoverage.toFixed(2)}%`,
-          id: cachedDt,
-          link: 'https://checkweather.sg',
-          date,
+      if (!feedCache) {
+        const date = getDateFromStr(cachedDt);
+        const feed = new Feed({
+          title: 'Rain GeoJSON SG',
+          id: 'rain-geojson-sg',
+          updated: date,
         });
+        if (sgCoverage > 5 && cachedDt){
+          feed.addItem({
+            title: `${'🌧'.repeat(Math.ceil(coverage/20))} Rain coverage: ${coverage.toFixed(2)}%`,
+            description: `Rain coverage over Singapore: ${sgCoverage.toFixed(2)}%`,
+            id: cachedDt,
+            link: 'https://checkweather.sg',
+            date,
+          });
+        }
+        feedCache = feed.atom1();
+        setTimeout(() => {
+          feedCache = null;
+        }, 14 * 60 * 1000); // 14 minutes
       }
       res.setHeader('content-type', 'application/atom+xml');
       res.setHeader('cache-control', 'public, max-age=900, s-maxage=900');
-      res.end(feed.atom1());
+      res.end(feedCache);
       break;
     default:
       res.statusCode = 404;
