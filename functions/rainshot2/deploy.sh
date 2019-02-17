@@ -1,0 +1,1 @@
+gcloud beta functions deploy rainshot2 --trigger-http --runtime nodejs8 --memory 2048MB --region asia-northeast1 --project rain-geojson-sg
