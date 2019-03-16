@@ -8,6 +8,5 @@
     "sg-region-boundary.json",
     "package.json",
     "package-lock.json"
-  ],
-  "regions": ["hnd1"]
+  ]
 }
