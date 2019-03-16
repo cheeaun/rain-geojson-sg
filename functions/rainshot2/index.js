@@ -23,7 +23,7 @@ async function getBrowserPage() {
   await p.goto('https://checkweather.sg/mini/', {
     waitUntil: 'networkidle0',
   });
-  await p.waitForSelector('image[href*="http"]');
+  await p.waitForFunction("document.getElementById('rain').classList.contains('loaded')");
 
   return Promise.resolve(p);
 }
@@ -54,7 +54,7 @@ exports.rainshot2 = async (req, res) => {
     await page.reload({
       waitUntil: 'networkidle0',
     });
-    await page.waitForSelector('image[href*="http"]');
+    await page.waitForFunction("document.getElementById('rain').classList.contains('loaded')");
     await page.waitForFunction("document.getElementById('datetime').textContent.trim().length > 0");
   }
 
