@@ -13,12 +13,12 @@
     "feed": "~2.0.4",
     "geojson-rewind": "~0.3.1",
     "got": "~9.6.0",
-    "micro": "~9.3.3",
+    "micro": "~9.3.4",
     "micro-cors": "~0.1.1",
     "nearest-color": "~0.4.4",
     "pngjs": "~3.4.0",
-    "polygon-clipping": "~0.14.0",
-    "rgb-hex": "~2.1.0"
+    "polygon-clipping": "~0.14.1",
+    "rgb-hex": "~3.0.0"
   },
   "devDependencies": {
     "micro-dev": "~3.0.0"
