@@ -10,7 +10,7 @@ const { union } = require('polygon-clipping');
 const rgbHex = require('rgb-hex');
 const { Feed } = require('feed');
 
-const boundaryFeature = JSON.parse(require('fs').readFileSync('./sg-region-boundary.json'));
+const boundaryFeature = require('./sg-region-boundary.json');
 
 // Rain area center and boundaries
 const lowerLat = 1.156, upperLat = 1.475, lowerLong = 103.565, upperLong = 104.130;
