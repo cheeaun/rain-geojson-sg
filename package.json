@@ -21,7 +21,8 @@
     "rgb-hex": "~3.0.0"
   },
   "devDependencies": {
-    "micro-dev": "~3.0.0"
+    "micro-dev": "~3.0.0",
+    "now-micro": "^0.3.0"
   },
   "scripts": {
     "start": "micro -l tcp://0.0.0.0:${PORT-3000}",

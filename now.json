@@ -1,12 +1,14 @@
 {
+  "version": 2,
   "alias": [
     "rain-geojson-sg.now.sh",
     "api.checkweather.sg"
   ],
-  "files": [
-    "index.js",
-    "sg-region-boundary.json",
-    "package.json",
-    "package-lock.json"
-  ]
+  "builds": [
+    { "src": "index.js", "use": "now-micro" }
+  ],
+  "routes": [
+    { "src": "/(.*)", "dest": "/index.js" }
+  ],
+  "regions": ["sin"]
 }
