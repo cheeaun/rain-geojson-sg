@@ -225,8 +225,10 @@ const getGeoJSON = async () => {
 
   return [geoJSONCache, dataCache];
 };
-getGeoJSON();
-const geojsonInt = setInterval(getGeoJSON, 30 * 1000); // every half minute
+let geoJSONPromise = getGeoJSON();
+const geojsonInt = setInterval(() => {
+  geoJSONPromise = getGeoJSON();
+}, 30 * 1000); // every half minute
 process.on('SIGINT', () => clearInterval(geojsonInt));
 
 const stations = {};
@@ -304,7 +306,7 @@ module.exports = cors(async (req, res) => {
       break;
     }
     case '/now': {
-      const [geojson, data] = await getGeoJSON();
+      const [geojson, data] = await geoJSONPromise;
       const response = !ascii ? (!!json ? JSON.stringify(data) : geojson) : formatAscii(data);
       res.setHeader('content-type', !ascii ? 'application/json' : 'text/plain');
       res.setHeader('content-length', response.length);
@@ -313,7 +315,7 @@ module.exports = cors(async (req, res) => {
       break;
     }
     case '/now-id':
-      await getGeoJSON();
+      await geoJSONPromise;
       res.setHeader('content-type', 'text/plain');
       if (cachedDt){
         res.setHeader('cache-control', `public, max-age=60, s-maxage=${proxyMaxAge}`);
@@ -374,6 +376,7 @@ module.exports = cors(async (req, res) => {
       res.end(lastObservations[compact] || '');
       break;
     case '/feed':
+      await geoJSONPromise;
       console.log(`Feed request from: ${req.headers['user-agent']}`);
       if (!feedCache) {
         const date = getDateFromStr(cachedDt);
