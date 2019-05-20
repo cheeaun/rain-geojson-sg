@@ -1,0 +1,14 @@
+{
+  "name": "rainshot3",
+  "version": "1.0.0",
+  "dependencies": {
+    "chrome-aws-lambda": "~1.16.1",
+    "puppeteer-core": "~1.16.0"
+  },
+  "devDependencies": {
+    "chrome-finder": "~1.0.5"
+  },
+  "scripts": {
+    "start": "node index"
+  }
+}

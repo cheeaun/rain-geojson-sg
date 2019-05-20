@@ -1,0 +1,14 @@
+{
+  "name": "rainshot",
+  "alias": [ "rainshot.now.sh" ],
+  "version": 2,
+  "regions": ["sin"],
+  "public": true,
+  "builds": [
+    { "src": "index.js", "use": "@now/node", "config": { "maxLambdaSize": "40mb" } }
+  ],
+  "routes": [
+    { "src": "/favicon.ico", "status": 204 },
+    { "src": "/(.+)", "dest": "/index.js" }
+  ]
+}
