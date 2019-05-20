@@ -381,6 +381,7 @@ module.exports = cors(async (req, res) => {
           title: 'Rain GeoJSON SG',
           id: 'rain-geojson-sg',
           updated: date,
+          generator: `Rain feed - ${cachedDt} - ${sgCoverage}`,
         });
         if (sgCoverage > 5 && cachedDt){
           feed.addItem({
