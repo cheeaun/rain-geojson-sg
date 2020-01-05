@@ -148,7 +148,7 @@ const fetchImage = (dt) => new Promise((resolve, reject) => {
   console.log(url !== prevURL ? `➡️  ${url}` : '♻️');
   prevURL = url;
   let imgReq;
-  const imgStream = got.stream(url, { encoding: null })
+  got.stream(url, { responseType: 'buffer' })
     .on('error', (e) => {
       if (e.statusCode == 404){
         reject(new Error('Page not found'));
@@ -234,7 +234,7 @@ process.on('SIGINT', () => clearInterval(geojsonInt));
 const stations = {};
 (async () => {
   const stationsURL = 'http://www.weather.gov.sg/mobile/json/rest-get-all-climate-stations.json';
-  const { body } = await got(stationsURL, { json: true });
+  const { body } = await got(stationsURL, { responseType: 'json' });
   body.data.forEach(d => {
     stations[d.id] = d;
   });
@@ -330,7 +330,7 @@ module.exports = cors(async (req, res) => {
       res.setHeader('content-type', 'application/json');
       res.setHeader('cache-control', 'public, max-age=60');
       try {
-        const { body, fromCache } = await got(dataURL, { json: true, cache: observationsCache });
+        const { body, fromCache } = await got(dataURL, { responseType: 'json', cache: observationsCache });
         if (!fromCache || !lastObservations[compact]){
           const features = [];
           Object.entries(body.data.station).forEach(([id, values]) => {
