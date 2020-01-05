@@ -375,6 +375,16 @@ module.exports = cors(async (req, res) => {
       } catch(e) {}
       res.end(lastObservations[compact] || '');
       break;
+    case '/coverage':
+      await geoJSONPromise;
+      res.setHeader('content-type', 'application/json');
+      res.setHeader('cache-control', 'public, max-age=900, s-maxage=900');
+      res.end(JSON.stringify({
+        id: cachedDt,
+        coverage,
+        sgCoverage,
+      }));
+      break;
     case '/feed':
       await geoJSONPromise;
       console.log(`Feed request from: ${req.headers['user-agent']}`);
