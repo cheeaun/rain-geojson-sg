@@ -16,13 +16,13 @@
     "micro": "~9.3.4",
     "micro-cors": "~0.1.1",
     "nearest-color": "~0.4.4",
+    "now-micro": "~0.4.0",
     "pngjs": "~3.4.0",
     "polygon-clipping": "~0.14.3",
     "rgb-hex": "~3.0.0"
   },
   "devDependencies": {
-    "micro-dev": "~3.0.0",
-    "now-micro": "^0.4.0"
+    "micro-dev": "~3.0.0"
   },
   "scripts": {
     "start": "micro -l tcp://0.0.0.0:${PORT-3000}",
