@@ -148,7 +148,7 @@ const fetchImage = (dt) => new Promise((resolve, reject) => {
   console.log(url !== prevURL ? `➡️  ${url}` : '♻️');
   prevURL = url;
   let imgReq;
-  got.stream(url, { responseType: 'buffer' })
+  got.stream(url, { encoding: null })
     .on('error', (e) => {
       if (e.statusCode == 404){
         reject(new Error('Page not found'));
@@ -234,7 +234,7 @@ process.on('SIGINT', () => clearInterval(geojsonInt));
 const stations = {};
 (async () => {
   const stationsURL = 'http://www.weather.gov.sg/mobile/json/rest-get-all-climate-stations.json';
-  const { body } = await got(stationsURL, { responseType: 'json' });
+  const { body } = await got(stationsURL, { json: true });
   body.data.forEach(d => {
     stations[d.id] = d;
   });
@@ -330,7 +330,7 @@ module.exports = cors(async (req, res) => {
       res.setHeader('content-type', 'application/json');
       res.setHeader('cache-control', 'public, max-age=60');
       try {
-        const { body, fromCache } = await got(dataURL, { responseType: 'json', cache: observationsCache });
+        const { body, fromCache } = await got(dataURL, { json: true, cache: observationsCache });
         if (!fromCache || !lastObservations[compact]){
           const features = [];
           Object.entries(body.data.station).forEach(([id, values]) => {
@@ -419,3 +419,20 @@ module.exports = cors(async (req, res) => {
       res.end('404.');
   }
 });
+
+    let __original_lambda
+
+    if (typeof exports === 'function') {
+      __original_lambda = exports
+    }
+    else if (typeof module.exports === 'function') {
+      __original_lambda = module.exports
+    }
+    else {
+      throw new Error(
+        `now-micro builder expects main export to be a function (${typeof module.exports} found)`,
+      )
+    }
+
+    exports = module.exports = (req, res) => require('micro').run(req, res, __original_lambda)
+  
