@@ -2,11 +2,11 @@
   "name": "rainshot3",
   "version": "1.0.0",
   "dependencies": {
-    "chrome-aws-lambda": "~1.16.1",
-    "puppeteer-core": "~1.16.0"
+    "chrome-aws-lambda": "~2.0.2",
+    "puppeteer-core": "~2.0.0"
   },
   "devDependencies": {
-    "chrome-finder": "~1.0.5"
+    "chrome-finder": "https://github.com/simplemerchant/chrome-finder.git"
   },
   "scripts": {
     "start": "node index"

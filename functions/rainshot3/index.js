@@ -1,14 +1,13 @@
 const { createServer } = require('http');
 const findChrome = require('chrome-finder');
 const chrome = require('chrome-aws-lambda');
-const puppeteer = require('puppeteer-core');
 
 const isDev = !process.env.NOW_REGION;
 let page;
 
 async function getBrowserPage() {
   try {
-    const browser = await puppeteer.launch({
+    const browser = await chrome.puppeteer.launch({
       defaultViewport: {
         width: 400,
         height: 226,
@@ -46,6 +45,7 @@ async function handler(req, res) {
     if (!page) page = await getBrowserPage();
 
     await page.waitForFunction("document.getElementById('datetime').textContent.trim().length > 0");
+    await page.waitForFunction("document.getElementById('obs').children.length > 0");
 
     const [time, localTime] = await page.evaluate(() => {
       const time = document.getElementById('datetime').textContent.match(/^\d+\:\d\d/i)[0];
@@ -64,6 +64,7 @@ async function handler(req, res) {
       });
       await page.waitForFunction("document.getElementById('rain').classList.contains('loaded')");
       await page.waitForFunction("document.getElementById('datetime').textContent.trim().length > 0");
+      await page.waitForFunction("document.getElementById('obs').children.length > 0");
     }
 
     const imageBuffer = await page.screenshot({
