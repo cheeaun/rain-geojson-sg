@@ -5,7 +5,7 @@
     "api.checkweather.sg"
   ],
   "builds": [
-    { "src": "index.js", "use": "now-micro" },
+    { "src": "index.js", "use": "@now/node" },
     { "src": "api/*.js", "use": "@now/node" }
   ],
   "routes": [
