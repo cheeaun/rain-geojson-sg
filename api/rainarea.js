@@ -201,6 +201,6 @@ module.exports = async (req, res) => {
     res.json(output);
     console.timeEnd('RESPONSE');
   } catch (e) {
-    res.send(e.stack || e);
+    res.json({ error: e.stack || e });
   }
 };
