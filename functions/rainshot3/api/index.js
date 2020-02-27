@@ -8,6 +8,7 @@ let page;
 async function getBrowserPage() {
   try {
     const browser = await chrome.puppeteer.launch({
+      ignoreHTTPSErrors: true,
       defaultViewport: {
         width: 400,
         height: 226,
@@ -78,7 +79,7 @@ async function handler(req, res) {
   }
 };
 
-exports.default = handler;
+module.exports = handler;
 
 if (isDev) {
   const PORT = process.env.PORT || 13463;
