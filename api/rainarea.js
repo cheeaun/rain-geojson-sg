@@ -155,30 +155,43 @@ module.exports = async (req, res) => {
   try {
     console.time('RESPONSE');
     let nowDt = datetimeNowStr();
-    let dt = datetimeStr();
-    let output = cachedOutput[dt];
+    let dt, output;
 
-    if (!output) {
-      let img;
-      try {
-        img = await fetchRadar(dt);
-      } catch (e) {
-        // Retry with older radar image
-        nowDt = datetimeNowStr(-5);
-        dt = datetimeStr(-5);
-        output = cachedOutput[dt];
+    if (req.query.dt) {
+      dt = +req.query.dt;
+      const img = await fetchRadar(dt);
+      const rainareas = convertImageToData(img);
+      output = {
+        id: '' + dt,
+        dt,
+        ...rainareas,
+      };
+    } else {
+      dt = datetimeStr();
+      output = cachedOutput[dt];
 
-        if (!output) {
-          img = await fetchRadar(dt);
-        }
-      }
       if (!output) {
-        const rainareas = convertImageToData(img);
-        output = cachedOutput[dt] = {
-          id: '' + dt,
-          dt,
-          ...rainareas,
-        };
+        let img;
+        try {
+          img = await fetchRadar(dt);
+        } catch (e) {
+          // Retry with older radar image
+          nowDt = datetimeNowStr(-5);
+          dt = datetimeStr(-5);
+          output = cachedOutput[dt];
+
+          if (!output) {
+            img = await fetchRadar(dt);
+          }
+        }
+        if (!output) {
+          const rainareas = convertImageToData(img);
+          output = cachedOutput[dt] = {
+            id: '' + dt,
+            dt,
+            ...rainareas,
+          };
+        }
       }
     }
 
