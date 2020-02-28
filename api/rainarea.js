@@ -154,11 +154,11 @@ const cachedOutput = {};
 module.exports = async (req, res) => {
   try {
     console.time('RESPONSE');
-    let nowDt = datetimeNowStr();
     let dt, output;
+    const queryDt = req.query.dt;
 
-    if (req.query.dt) {
-      dt = +req.query.dt;
+    if (queryDt) {
+      dt = +queryDt;
       const img = await fetchRadar(dt);
       const rainareas = convertImageToData(img);
       output = {
@@ -166,6 +166,7 @@ module.exports = async (req, res) => {
         dt,
         ...rainareas,
       };
+      res.setHeader('cache-control', 'public, max-age=31536000');
     } else {
       dt = datetimeStr();
       output = cachedOutput[dt];
@@ -176,7 +177,6 @@ module.exports = async (req, res) => {
           img = await fetchRadar(dt);
         } catch (e) {
           // Retry with older radar image
-          nowDt = datetimeNowStr(-5);
           dt = datetimeStr(-5);
           output = cachedOutput[dt];
 
@@ -193,11 +193,9 @@ module.exports = async (req, res) => {
           };
         }
       }
+      res.setHeader('cache-control', 'public, max-age=60');
     }
 
-    const ageDiff = nowDt - dt;
-    const proxyMaxAge = Math.max(0, 5 - ageDiff) * 60;
-    res.setHeader('cache-control', `public, max-age=60, s-maxage=${proxyMaxAge}`);
     res.json(output);
     console.timeEnd('RESPONSE');
   } catch (e) {
