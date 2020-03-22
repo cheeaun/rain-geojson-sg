@@ -15,51 +15,55 @@ function datetimeNowStr(customMinutes) {
   const hour = ('' + d.getUTCHours()).padStart(2, '0');
   const min = ('' + d.getUTCMinutes()).padStart(2, '0');
   return parseInt(year + month + day + hour + min, 10);
-};
+}
 
 function datetimeStr(customMinutes) {
   const d = datetimeNowStr(customMinutes);
   return Math.floor(d / 5) * 5;
-};
+}
 
 const shortenPercentage = percentage => +percentage.toFixed(2);
 
-const fetchRadar = dt => new Promise((resolve, reject) => {
-  console.log(`Fetch: ${dt}`);
-  const url = `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`;
-  console.log(`➡️  ${url}`);
-  console.time('Fetch radar');
-  got.stream(url, { encoding: null })
-    .on('error', (e) => {
-      if (e.statusCode == 404){
-        reject(new Error('Page not found'));
-      } else {
+const fetchRadar = dt =>
+  new Promise((resolve, reject) => {
+    console.log(`Fetch: ${dt}`);
+    const url = `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`;
+    console.log(`➡️  ${url}`);
+    console.time('Fetch radar');
+    got
+      .stream(url, { encoding: null })
+      .on('error', e => {
+        if (e.statusCode == 404) {
+          reject(new Error('Page not found'));
+        } else {
+          console.error(e);
+          reject(e);
+        }
+      })
+      .on('request', req => (imgReq = req))
+      .on('response', msg => {
+        if (msg.headers['content-type'] !== 'image/png') {
+          imgReq && imgReq.abort();
+          const e = new Error('Radar image is not a PNG image.');
+          console.error(e);
+          reject(e);
+        }
+      })
+      .pipe(
+        new PNG({
+          filterType: 4,
+          checkCRC: false,
+        }),
+      )
+      .on('error', e => {
         console.error(e);
         reject(e);
-      }
-    })
-    .on('request', (req) => imgReq = req)
-    .on('response', (msg) => {
-      if (msg.headers['content-type'] !== 'image/png'){
-        imgReq && imgReq.abort();
-        const e = new Error('Radar image is not a PNG image.');
-        console.error(e);
-        reject(e);
-      }
-    })
-    .pipe(new PNG({
-      filterType: 4,
-      checkCRC: false,
-    }))
-    .on('error', (e) => {
-      console.error(e);
-      reject(e);
-    })
-    .on('parsed', function(){
-      resolve(this);
-      console.timeEnd('Fetch radar');
-    });
-});
+      })
+      .on('parsed', function() {
+        resolve(this);
+        console.timeEnd('Fetch radar');
+      });
+  });
 
 // Color scales
 const intensityColors = [
@@ -199,6 +203,7 @@ module.exports = async (req, res) => {
     res.json(output);
     console.timeEnd('RESPONSE');
   } catch (e) {
+    res.setHeader('cache-control', 'no-cache');
     res.json({ error: e.stack || e });
   }
 };
