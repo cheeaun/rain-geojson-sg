@@ -1,9 +1,18 @@
 {
-  "alias": [ "rainshot.now.sh" ],
+  "alias": ["rainshot.now.sh"],
   "version": 2,
   "regions": ["sin"],
   "public": true,
-  "rewrites": [
-    { "source": "(.*)", "destination": "api/index" }
+  "rewrites": [{ "source": "(.*)", "destination": "api/index" }],
+  "headers": [
+    {
+      "source": "/",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=60"
+        }
+      ]
+    }
   ]
 }
