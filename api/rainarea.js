@@ -22,9 +22,9 @@ function datetimeStr(customMinutes) {
   return Math.floor(d / 5) * 5;
 }
 
-const shortenPercentage = percentage => +percentage.toFixed(2);
+const shortenPercentage = (percentage) => +percentage.toFixed(2);
 
-const fetchRadar = dt =>
+const fetchRadar = (dt) =>
   new Promise((resolve, reject) => {
     console.log(`Fetch: ${dt}`);
     const url = `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`;
@@ -32,7 +32,7 @@ const fetchRadar = dt =>
     console.time('Fetch radar');
     got
       .stream(url, { encoding: null })
-      .on('error', e => {
+      .on('error', (e) => {
         if (e.statusCode == 404) {
           reject(new Error('Page not found'));
         } else {
@@ -40,8 +40,8 @@ const fetchRadar = dt =>
           reject(e);
         }
       })
-      .on('request', req => (imgReq = req))
-      .on('response', msg => {
+      .on('request', (req) => (imgReq = req))
+      .on('response', (msg) => {
         if (msg.headers['content-type'] !== 'image/png') {
           imgReq && imgReq.abort();
           const e = new Error('Radar image is not a PNG image.');
@@ -55,11 +55,11 @@ const fetchRadar = dt =>
           checkCRC: false,
         }),
       )
-      .on('error', e => {
+      .on('error', (e) => {
         console.error(e);
         reject(e);
       })
-      .on('parsed', function() {
+      .on('parsed', function () {
         resolve(this);
         console.timeEnd('Fetch radar');
       });
@@ -100,24 +100,24 @@ const intensityColors = [
 ];
 const intensityColorsCount = intensityColors.length;
 const nearestColor = require('nearest-color').from(intensityColors);
-const getIntensity = color => {
+const getIntensity = (color) => {
   const c = nearestColor(color);
   const index = intensityColors.indexOf(c);
   return Math.ceil(((index + 1) / intensityColorsCount) * 100);
 };
 
-const formatAscii = data =>
+const formatAscii = (data) =>
   data
-    .map(y => {
+    .map((y) => {
       let text = '';
-      y.forEach(x => {
+      y.forEach((x) => {
         text += x ? String.fromCharCode(x + 33) : ' ';
       });
       return text.trimEnd();
     })
     .join('\n');
 
-const convertImageToData = img => {
+const convertImageToData = (img) => {
   const intensityData = [];
   let coverageCount = 0;
   let sgCoverageCount = 0;
