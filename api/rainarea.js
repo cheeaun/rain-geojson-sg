@@ -170,7 +170,7 @@ module.exports = async (req, res) => {
         dt,
         ...rainareas,
       };
-      res.setHeader('cache-control', 'public, max-age=31536000');
+      res.setHeader('cache-control', 'public, max-age=31536000, immutable');
     } else {
       dt = datetimeStr();
       output = cachedOutput[dt];
