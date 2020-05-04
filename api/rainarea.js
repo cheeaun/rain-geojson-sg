@@ -197,7 +197,7 @@ module.exports = async (req, res) => {
           };
         }
       }
-      res.setHeader('cache-control', 'public, max-age=60');
+      res.setHeader('cache-control', 'public, max-age=30, must-revalidate');
     }
 
     res.json(output);
