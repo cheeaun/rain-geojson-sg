@@ -35,6 +35,13 @@ const getObservations = async () => {
         if (val) values[k] = val;
       }
     }
+
+    // Special case for S121 overlapping with S23
+    if (id === 'S121') {
+      delete values.temp_celcius;
+      delete values.relative_humidity;
+    }
+
     if (Object.keys(values).length) {
       obs.push({
         id,
