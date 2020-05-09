@@ -1,6 +1,7 @@
 const got = require('got');
 
-const stationsURL = 'http://www.weather.gov.sg/mobile/json/rest-get-all-climate-stations.json';
+const stationsURL =
+  'http://www.weather.gov.sg/mobile/json/rest-get-all-climate-stations.json';
 let stationsData;
 const getStations = async () => {
   if (stationsData) return stationsData;
@@ -10,7 +11,8 @@ const getStations = async () => {
   return body;
 };
 
-const dataURL = 'http://www.weather.gov.sg/mobile/json/rest-get-latest-observation-for-all-locs.json';
+const dataURL =
+  'http://www.weather.gov.sg/mobile/json/rest-get-latest-observation-for-all-locs.json';
 const observationsCache = new Map();
 const numberRegexp = /[\d.]+/;
 const getObservations = async () => {
@@ -25,7 +27,7 @@ const getObservations = async () => {
   const obs = [];
   Object.entries(observations.data.station).forEach(([stationID, obj]) => {
     const { id, long, lat } = climateStations.data.find(
-      d => d.id === stationID,
+      (d) => d.id === stationID,
     );
     const values = {};
     for (let k in obj) {
