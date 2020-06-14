@@ -31,7 +31,7 @@ const fetchRadar = (dt) =>
     console.log(`➡️  ${url}`);
     console.time('Fetch radar');
     got
-      .stream(url, { encoding: null })
+      .stream(url, { encoding: null, timeout: 1 * 60 * 1000 })
       .on('error', (e) => {
         if (e.statusCode == 404) {
           reject(new Error('Page not found'));
