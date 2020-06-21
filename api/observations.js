@@ -6,7 +6,11 @@ let stationsData;
 const getStations = async () => {
   if (stationsData) return stationsData;
   console.time('GET STATIONS');
-  const { body } = await got(stationsURL, { json: true });
+  const { body } = await got(stationsURL, {
+    responseType: 'json',
+    timeout: 3 * 1000,
+    headers: { 'user-agent': undefined },
+  });
   console.timeEnd('GET STATIONS');
   return body;
 };
@@ -19,7 +23,13 @@ const getObservations = async () => {
   console.time('GET OBS');
   const [climateStations, { body: observations }] = await Promise.all([
     getStations(),
-    got(dataURL, { json: true, cache: observationsCache }),
+    got(dataURL, {
+      responseType: 'json',
+      timeout: 3 * 1000,
+      retry: 3,
+      cache: observationsCache,
+      headers: { 'user-agent': undefined },
+    }),
   ]);
   console.timeEnd('GET OBS');
   stationsData = climateStations;

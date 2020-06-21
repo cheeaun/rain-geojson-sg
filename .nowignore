@@ -1,8 +1,6 @@
 .vscode/
 functions/
-ncc/
 node_modules/
-user/
 .gitignore
 radar2geojson.png
 README.md

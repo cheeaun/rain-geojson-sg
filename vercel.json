@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "alias": ["rain-geojson-sg.now.sh", "api.checkweather.sg"],
+  "builds": [
+    { "src": "index.js", "use": "@now/node" },
+    { "src": "api/*.js", "use": "@now/node" }
+  ],
+  "routes": [
+    { "src": "/favicon.ico", "status": 204 },
+    {
+      "src": "/v2/(.*)",
+      "dest": "/api/$1.js",
+      "headers": { "Access-Control-Allow-Origin": "*" }
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.js",
+      "headers": { "Access-Control-Allow-Origin": "*" }
+    }
+  ],
+  "regions": ["sin"]
+}
