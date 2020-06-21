@@ -23,6 +23,7 @@ function datetimeStr(customMinutes) {
 }
 
 const shortenPercentage = (percentage) => +percentage.toFixed(2);
+const requestCache = new Map();
 
 const fetchRadar = (dt) =>
   new Promise((resolve, reject) => {
@@ -30,39 +31,75 @@ const fetchRadar = (dt) =>
     const url = `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`;
     console.log(`➡️  ${url}`);
     console.time('Fetch radar');
-    got
-      .stream(url, { encoding: null, timeout: 1 * 60 * 1000 })
-      .on('error', (e) => {
+    got(url, {
+      responseType: 'buffer',
+      timeout: 3 * 1000,
+      retry: 3,
+      cache: requestCache,
+      headers: { 'user-agent': undefined },
+    })
+      .then((response) => {
+        const { body, headers } = response;
+        if (headers['content-type'] !== 'image/png') {
+          const e = new Error('Radar image is not a PNG image.');
+          console.error(e);
+          reject(e);
+        }
+        console.timeEnd('Fetch radar');
+        console.time('Decode PNG');
+        new PNG({ filterType: 4, checkCRC: false }).parse(body, function (
+          error,
+          data,
+        ) {
+          if (error) {
+            reject(error);
+            return;
+          }
+          resolve(data);
+          console.timeEnd('Decode PNG');
+        });
+      })
+      .catch((e) => {
         if (e.statusCode == 404) {
           reject(new Error('Page not found'));
         } else {
           console.error(e);
           reject(e);
         }
-      })
-      .on('request', (req) => (imgReq = req))
-      .on('response', (msg) => {
-        if (msg.headers['content-type'] !== 'image/png') {
-          imgReq && imgReq.abort();
-          const e = new Error('Radar image is not a PNG image.');
-          console.error(e);
-          reject(e);
-        }
-      })
-      .pipe(
-        new PNG({
-          filterType: 4,
-          checkCRC: false,
-        }),
-      )
-      .on('error', (e) => {
-        console.error(e);
-        reject(e);
-      })
-      .on('parsed', function () {
-        resolve(this);
-        console.timeEnd('Fetch radar');
       });
+    // got
+    //   .stream(url, { responseType: 'buffer', timeout: 1 * 60 * 1000 })
+    //   .on('error', (e) => {
+    //     if (e.statusCode == 404) {
+    //       reject(new Error('Page not found'));
+    //     } else {
+    //       console.error(e);
+    //       reject(e);
+    //     }
+    //   })
+    //   .on('request', (req) => (imgReq = req))
+    //   .on('response', (msg) => {
+    //     if (msg.headers['content-type'] !== 'image/png') {
+    //       imgReq && imgReq.abort();
+    //       const e = new Error('Radar image is not a PNG image.');
+    //       console.error(e);
+    //       reject(e);
+    //     }
+    //   })
+    //   .pipe(
+    //     new PNG({
+    //       filterType: 4,
+    //       checkCRC: false,
+    //     }),
+    //   )
+    //   .on('error', (e) => {
+    //     console.error(e);
+    //     reject(e);
+    //   })
+    //   .on('parsed', function () {
+    //     resolve(this);
+    //     console.timeEnd('Fetch radar');
+    //   });
   });
 
 // Color scales
