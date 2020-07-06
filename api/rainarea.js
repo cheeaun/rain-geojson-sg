@@ -24,6 +24,7 @@ function datetimeStr(customMinutes) {
 
 const shortenPercentage = (percentage) => +percentage.toFixed(2);
 const requestCache = new Map();
+const gotDefaultOptions = got.defaults.options;
 
 const fetchRadar = (dt) =>
   new Promise((resolve, reject) => {
@@ -34,7 +35,11 @@ const fetchRadar = (dt) =>
     got(url, {
       responseType: 'buffer',
       timeout: 3 * 1000,
-      retry: 3,
+      retry: {
+        ...gotDefaultOptions.retry,
+        limit: 3,
+        statusCodes: [404, ...gotDefaultOptions.retry.statusCodes],
+      },
       cache: requestCache,
       headers: { 'user-agent': undefined },
     })
