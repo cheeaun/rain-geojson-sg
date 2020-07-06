@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "alias": ["rain-geojson-sg.now.sh", "api.checkweather.sg"],
+  "alias": ["rain-geojson-sg.vercel.app", "api.checkweather.sg"],
   "builds": [
     { "src": "index.js", "use": "@now/node" },
     { "src": "api/*.js", "use": "@now/node" }
