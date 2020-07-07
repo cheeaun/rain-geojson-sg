@@ -39,6 +39,7 @@ const fetchRadar = (dt) =>
         ...gotDefaultOptions.retry,
         limit: 3,
         statusCodes: [404, ...gotDefaultOptions.retry.statusCodes],
+        errorCodes: ['Z_BUF_ERROR', ...gotDefaultOptions.retry.errorCodes],
       },
       cache: requestCache,
       headers: { 'user-agent': undefined },
