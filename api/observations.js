@@ -4,6 +4,7 @@ const stationsURL =
   'http://www.weather.gov.sg/mobile/json/rest-get-all-climate-stations.json';
 let stationsData;
 const getStations = async () => {
+  console.log('GET STATIONS start');
   if (stationsData) return stationsData;
   console.time('GET STATIONS');
   const { body } = await got(stationsURL, {
@@ -14,15 +15,17 @@ const getStations = async () => {
   console.timeEnd('GET STATIONS');
   return body;
 };
+const getStationsPromise = getStations();
 
 const dataURL =
   'http://www.weather.gov.sg/mobile/json/rest-get-latest-observation-for-all-locs.json';
 const observationsCache = new Map();
 const numberRegexp = /[\d.]+/;
 const getObservations = async () => {
+  console.log('GET OBS start');
   console.time('GET OBS');
   const [climateStations, { body: observations }] = await Promise.all([
-    getStations(),
+    getStationsPromise,
     got(dataURL, {
       responseType: 'json',
       timeout: 3 * 1000,
