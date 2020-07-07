@@ -43,6 +43,13 @@ const fetchRadar = (dt) =>
       },
       cache: requestCache,
       headers: { 'user-agent': undefined },
+      hooks: {
+        beforeRetry: [
+          (options, error) => {
+            if (error) console.log('Before retry:', error);
+          },
+        ],
+      },
     })
       .then((response) => {
         const { body, headers } = response;
