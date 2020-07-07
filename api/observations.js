@@ -5,17 +5,20 @@ const stationsURL =
 let stationsData;
 const getStations = async () => {
   console.log('GET STATIONS start');
-  if (stationsData) return stationsData;
   console.time('GET STATIONS');
+  if (stationsData) {
+    console.timeEnd('GET STATIONS');
+    return stationsData;
+  }
   const { body } = await got(stationsURL, {
     responseType: 'json',
     timeout: 3 * 1000,
     headers: { 'user-agent': undefined },
   });
   console.timeEnd('GET STATIONS');
+  stationsData = body;
   return body;
 };
-const getStationsPromise = getStations();
 
 const dataURL =
   'http://www.weather.gov.sg/mobile/json/rest-get-latest-observation-for-all-locs.json';
@@ -25,17 +28,18 @@ const getObservations = async () => {
   console.log('GET OBS start');
   console.time('GET OBS');
   const [climateStations, { body: observations }] = await Promise.all([
-    getStationsPromise,
+    getStations(),
     got(dataURL, {
       responseType: 'json',
       timeout: 3 * 1000,
       retry: 3,
       cache: observationsCache,
       headers: { 'user-agent': undefined },
+    }).then((res) => {
+      console.timeEnd('GET OBS');
+      return res;
     }),
   ]);
-  console.timeEnd('GET OBS');
-  stationsData = climateStations;
 
   const obs = [];
   Object.entries(observations.data.station).forEach(([stationID, obj]) => {
