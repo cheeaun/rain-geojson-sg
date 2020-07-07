@@ -34,6 +34,7 @@ const getObservations = async () => {
       timeout: 3 * 1000,
       retry: 3,
       cache: observationsCache,
+      maxRedirects: 2,
       headers: { 'user-agent': undefined },
     }).then((res) => {
       console.timeEnd('GET OBS');
