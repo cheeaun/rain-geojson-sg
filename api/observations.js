@@ -25,22 +25,20 @@ const dataURL =
 const observationsCache = new Map();
 const numberRegexp = /[\d.]+/;
 const getObservations = async () => {
+  const climateStations = await getStations();
+
   console.log('GET OBS start');
   console.time('GET OBS');
-  const [climateStations, { body: observations }] = await Promise.all([
-    getStations(),
-    got(dataURL, {
-      responseType: 'json',
-      timeout: 3 * 1000,
-      retry: 3,
-      cache: observationsCache,
-      maxRedirects: 2,
-      headers: { 'user-agent': undefined },
-    }).then((res) => {
-      console.timeEnd('GET OBS');
-      return res;
-    }),
-  ]);
+  const { body: observations } = await got(dataURL, {
+    responseType: 'json',
+    timeout: 2 * 1000,
+    retry: 2,
+    // cache: observationsCache,
+    maxRedirects: 1,
+    calculateDelay: () => 1000,
+    headers: { 'user-agent': undefined },
+  });
+  console.timeEnd('GET OBS');
 
   const obs = [];
   Object.entries(observations.data.station).forEach(([stationID, obj]) => {

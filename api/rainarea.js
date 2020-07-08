@@ -34,31 +34,34 @@ const fetchRadar = (dt) =>
     console.time('Fetch radar');
     got(url, {
       responseType: 'buffer',
-      timeout: 3 * 1000,
+      timeout: 2 * 1000,
       retry: {
         ...gotDefaultOptions.retry,
-        limit: 3,
+        limit: 2,
         statusCodes: [404, ...gotDefaultOptions.retry.statusCodes],
         errorCodes: ['Z_BUF_ERROR', ...gotDefaultOptions.retry.errorCodes],
       },
+      maxRedirects: 1,
+      calculateDelay: () => 1000,
       cache: requestCache,
       headers: { 'user-agent': undefined },
       hooks: {
         beforeRetry: [
           (options, error) => {
-            if (error) console.log('Before retry:', error);
+            if (error) console.log('Before retry:', error.message || error);
           },
         ],
       },
     })
       .then((response) => {
+        console.timeEnd('Fetch radar');
         const { body, headers } = response;
         if (headers['content-type'] !== 'image/png') {
           const e = new Error('Radar image is not a PNG image.');
           console.error(e);
           reject(e);
+          return;
         }
-        console.timeEnd('Fetch radar');
         console.time('Decode PNG');
         new PNG({ filterType: 4, checkCRC: false }).parse(body, function (
           error,
@@ -73,6 +76,7 @@ const fetchRadar = (dt) =>
         });
       })
       .catch((e) => {
+        console.timeEnd('Fetch radar');
         if (e.statusCode == 404) {
           reject(new Error('Page not found'));
         } else {
@@ -206,20 +210,23 @@ const convertImageToData = (img) => {
 
 const cachedOutput = {};
 module.exports = async (req, res) => {
+  console.time('RESPONSE');
   try {
-    console.time('RESPONSE');
     let dt, output;
     const queryDt = req.query.dt;
 
     if (queryDt) {
       dt = +queryDt;
-      const img = await fetchRadar(dt);
-      const rainareas = convertImageToData(img);
-      output = {
-        id: '' + dt,
-        dt,
-        ...rainareas,
-      };
+      output = cachedOutput[dt];
+      if (!output) {
+        const img = await fetchRadar(dt);
+        const rainareas = convertImageToData(img);
+        output = cachedOutput[dt] = {
+          id: '' + dt,
+          dt,
+          ...rainareas,
+        };
+      }
       res.setHeader('cache-control', 'public, max-age=31536000, immutable');
     } else {
       dt = datetimeStr();
@@ -251,9 +258,9 @@ module.exports = async (req, res) => {
     }
 
     res.json(output);
-    console.timeEnd('RESPONSE');
   } catch (e) {
     res.setHeader('cache-control', 'no-cache');
     res.json({ error: e.stack || e });
   }
+  console.timeEnd('RESPONSE');
 };
