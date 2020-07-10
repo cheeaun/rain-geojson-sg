@@ -22,7 +22,7 @@ const getStations = async () => {
 
 const dataURL =
   'http://www.weather.gov.sg/mobile/json/rest-get-latest-observation-for-all-locs.json';
-const observationsCache = new Map();
+// const observationsCache = new Map();
 const numberRegexp = /[\d.]+/;
 const getObservations = async () => {
   const climateStations = await getStations();
