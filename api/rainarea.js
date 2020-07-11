@@ -26,7 +26,7 @@ const shortenPercentage = (percentage) => +percentage.toFixed(2);
 const requestCache = new Map();
 const gotDefaultOptions = got.defaults.options;
 
-const fetchRadar = (dt) =>
+const fetchRadar = (dt, opts) =>
   new Promise((resolve, reject) => {
     console.log(`Fetch: ${dt}`);
     const url = `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`;
@@ -52,6 +52,7 @@ const fetchRadar = (dt) =>
           },
         ],
       },
+      ...opts,
     })
       .then((response) => {
         console.timeEnd('Fetch radar');
@@ -219,7 +220,7 @@ module.exports = async (req, res) => {
       dt = +queryDt;
       output = cachedOutput[dt];
       if (!output) {
-        const img = await fetchRadar(dt);
+        const img = await fetchRadar(dt, { retry: 0 });
         const rainareas = convertImageToData(img);
         output = cachedOutput[dt] = {
           id: '' + dt,
