@@ -78,6 +78,7 @@ module.exports = async (req, res) => {
     res.setHeader('cache-control', 'public, max-age=120, s-maxage=120');
     res.json(await getObservations());
   } catch (e) {
-    res.send(e.stack || e);
+    res.setHeader('cache-control', 'no-cache');
+    res.json({ error: e.stack || e });
   }
 };
