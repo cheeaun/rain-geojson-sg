@@ -1,73 +1,77 @@
 const got = require('got');
+const { DateTime } = require('luxon');
 
-const stationsURL =
-  'http://www.weather.gov.sg/mobile/json/rest-get-all-climate-stations.json';
-let stationsData;
-const getStations = async () => {
-  console.log('GET STATIONS start');
-  console.time('GET STATIONS');
-  if (stationsData) {
-    console.timeEnd('GET STATIONS');
-    return stationsData;
-  }
-  const { body } = await got(stationsURL, {
-    responseType: 'json',
-    timeout: 3 * 1000,
-    headers: { 'user-agent': undefined },
-  });
-  console.timeEnd('GET STATIONS');
-  stationsData = body;
-  return body;
+// Have to be X minutes in the past, else it's too recent and lack of data
+const datetime = () =>
+  DateTime.local()
+    .minus({ minutes: 10 })
+    .set({ second: 0 })
+    .setZone('Asia/Singapore')
+    .toISO()
+    .replace(/\..*$/, ''); // Remove the mili-seconds from the ISO-8601 timestamp
+
+const apiURLs = {
+  temp_celcius: 'https://api.data.gov.sg/v1/environment/air-temperature',
+  rain_mm: 'https://api.data.gov.sg/v1/environment/rainfall',
+  relative_humidity: 'https://api.data.gov.sg/v1/environment/relative-humidity',
+  wind_direction: 'https://api.data.gov.sg/v1/environment/wind-direction',
+  wind_speed: 'https://api.data.gov.sg/v1/environment/wind-speed',
 };
+const apiKeys = Object.keys(apiURLs);
 
-const dataURL =
-  'http://www.weather.gov.sg/mobile/json/rest-get-latest-observation-for-all-locs.json';
-// const observationsCache = new Map();
-const numberRegexp = /[\d.]+/;
-const getObservations = async () => {
-  const climateStations = await getStations();
-
-  console.log('GET OBS start');
-  console.time('GET OBS');
-  const { body: observations } = await got(dataURL, {
+const fetch = (url) => {
+  const u = `${url}?date_time=${datetime()}`;
+  console.log(`Fetching ${u}`);
+  return got(u, {
     responseType: 'json',
     timeout: 2 * 1000,
     retry: 2,
-    // cache: observationsCache,
     maxRedirects: 1,
     calculateDelay: () => 1000,
     headers: { 'user-agent': undefined },
   });
-  console.timeEnd('GET OBS');
+};
 
-  const obs = [];
-  Object.entries(observations.data.station).forEach(([stationID, obj]) => {
-    const { id, long, lat } = climateStations.data.find(
-      (d) => d.id === stationID,
-    );
-    const values = {};
-    for (let k in obj) {
-      const v = obj[k];
-      if (numberRegexp.test(v)) {
-        const val = Number(v);
-        if (val) values[k] = val;
-      }
+// id, lng, lat, temp_celcius, relative_humidity, rain_mm, wind_direction, wind_speed
+
+const getObservations = async () => {
+  const climateStations = {};
+  const observations = {};
+  const apiFetches = Object.values(apiURLs).map((url) => fetch(url));
+  const results = await Promise.allSettled(apiFetches);
+  results.forEach((result, i) => {
+    if (result.status !== 'fulfilled') {
+      console.log('API fetch failed:', apiKeys[i]);
+      return;
     }
-
-    // Special case for S121 overlapping with S23
-    if (id === 'S121') {
-      delete values.temp_celcius;
-      delete values.relative_humidity;
-    }
-
-    if (Object.keys(values).length) {
-      obs.push({
-        id,
-        lng: +(+long).toFixed(4),
-        lat: +(+lat).toFixed(4),
-        ...values,
+    const { body } = result.value;
+    body.metadata.stations.forEach((station) => {
+      climateStations[station.id] = {
+        lng: station.location.longitude,
+        lat: station.location.latitude,
+      };
+    });
+    body.items.forEach((item) => {
+      item.readings.forEach((reading) => {
+        if (!reading.value) return;
+        if (observations[reading.station_id]) {
+          observations[reading.station_id][apiKeys[i]] = reading.value;
+        } else {
+          observations[reading.station_id] = {
+            [apiKeys[i]]: reading.value,
+          };
+        }
       });
-    }
+    });
+  });
+
+  const obs = Object.entries(observations).map(([stationID, observation]) => {
+    return {
+      id: stationID,
+      lng: +climateStations[stationID].lng.toFixed(4),
+      lat: +climateStations[stationID].lat.toFixed(4),
+      ...observation,
+    };
   });
 
   return obs;
