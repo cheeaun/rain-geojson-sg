@@ -64,17 +64,17 @@ const fetchRadar = (dt, opts) =>
           return;
         }
         console.time('Decode PNG');
-        new PNG({ filterType: 4, checkCRC: false }).parse(body, function (
-          error,
-          data,
-        ) {
-          if (error) {
-            reject(error);
-            return;
-          }
-          resolve(data);
-          console.timeEnd('Decode PNG');
-        });
+        new PNG({ filterType: 4, checkCRC: false }).parse(
+          body,
+          function (error, data) {
+            if (error) {
+              reject(error);
+              return;
+            }
+            resolve(data);
+            console.timeEnd('Decode PNG');
+          },
+        );
       })
       .catch((e) => {
         console.timeEnd('Fetch radar');
