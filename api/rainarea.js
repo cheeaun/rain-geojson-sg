@@ -27,14 +27,18 @@ const requestCache = new Map();
 const gotDefaultOptions = got.defaults.options;
 
 let urlIndex = 0;
+const apiURL = (dt) => {
+  const url = [
+    `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`,
+    `https://www.nea.gov.sg/docs/default-source/rain-area/dpsri_70km_${dt}0000dBR.dpsri.png`,
+  ][urlIndex];
+  urlIndex = [1, 0][urlIndex];
+  return url;
+};
 const fetchRadar = (dt, opts) =>
   new Promise((resolve, reject) => {
     console.log(`Fetch: ${dt}`);
-    const url = [
-      `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`,
-      `https://www.nea.gov.sg/docs/default-source/rain-area/dpsri_70km_${dt}0000dBR.dpsri.png`,
-    ][urlIndex];
-    urlIndex = [1, 0][urlIndex]; // https://stackoverflow.com/a/31028514/20838
+    const url = apiURL(dt);
     console.log(`➡️  ${url}`);
     console.time('Fetch radar');
     got(url, {
@@ -54,6 +58,7 @@ const fetchRadar = (dt, opts) =>
         beforeRetry: [
           (options, error) => {
             if (error) console.log('Before retry:', error.message || error);
+            options.url = apiURL(dt);
           },
         ],
       },
