@@ -48,7 +48,11 @@ const fetchRadar = (dt, opts) =>
         ...gotDefaultOptions.retry,
         limit: 2,
         statusCodes: [404, ...gotDefaultOptions.retry.statusCodes],
-        errorCodes: ['Z_BUF_ERROR', ...gotDefaultOptions.retry.errorCodes],
+        errorCodes: [
+          'Z_BUF_ERROR',
+          'ERR_TOO_MANY_REDIRECTS',
+          ...gotDefaultOptions.retry.errorCodes,
+        ],
       },
       maxRedirects: 0,
       calculateDelay: () => 1000,
