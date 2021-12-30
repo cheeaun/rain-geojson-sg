@@ -50,7 +50,7 @@ const fetchRadar = (dt, opts) =>
         statusCodes: [404, ...gotDefaultOptions.retry.statusCodes],
         errorCodes: ['Z_BUF_ERROR', ...gotDefaultOptions.retry.errorCodes],
       },
-      maxRedirects: 1,
+      maxRedirects: 0,
       calculateDelay: () => 1000,
       cache: requestCache,
       headers: { 'user-agent': undefined },
