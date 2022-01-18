@@ -208,7 +208,7 @@ const fetchImage = (dt) =>
         if (e.statusCode == 404) {
           reject(new Error('Page not found'));
         } else {
-          console.error(e);
+          console.error(e.message || e);
           reject(e);
         }
       })
@@ -256,21 +256,33 @@ let geoJSONCache = '';
 let dataCache = {};
 const getGeoJSON = async () => {
   let dt = datetimeStr();
+  console.log('❇️  Get GeoJSON', dt);
   if (dt === cachedDt) return [geoJSONCache, dataCache];
 
   let img;
   try {
     img = await fetchImage(dt);
   } catch (e) {
-    // Retry with older radar image
-    dt = datetimeStr(-5);
-    // If older radar image is already cached, return immediately
-    if (dt === cachedDt) return [geoJSONCache, dataCache];
-    try {
-      img = await fetchImage(dt);
-    } catch (e) {
-      return [geoJSONCache, dataCache];
+    // dt = datetimeStr(-5);
+    // console.log('Retrying with older radar image', dt);
+    // // If older radar image is already cached, return immediately
+    // if (dt === cachedDt) return [geoJSONCache, dataCache];
+    // try {
+    //   img = await fetchImage(dt);
+    // } catch (e) {
+    //   return [geoJSONCache, dataCache];
+    // }
+
+    for (let i = 1; i <= 5; i++) {
+      dt = datetimeStr(i * -5);
+      console.log('Retrying with older radar image', dt);
+      if (dt === cachedDt) return [geoJSONCache, dataCache];
+      try {
+        img = await fetchImage(dt);
+        break;
+      } catch (e) {}
     }
+    if (!img) return [geoJSONCache, dataCache];
   }
 
   cachedDt = dt;
@@ -288,23 +300,23 @@ const geojsonInt = setInterval(() => {
 }, 30 * 1000); // every half minute
 process.on('SIGINT', () => clearInterval(geojsonInt));
 
-const stations = {};
-(async () => {
-  const stationsURL =
-    'http://www.weather.gov.sg/mobile/json/rest-get-all-climate-stations.json';
-  const { body } = await got(stationsURL, {
-    responseType: 'json',
-    headers: { 'user-agent': undefined },
-  });
-  body.data.forEach((d) => {
-    stations[d.id] = d;
-  });
-})();
-const observationsCache = new Map();
-let lastObservations = {};
+// const stations = {};
+// (async () => {
+//   const stationsURL =
+//     'http://www.weather.gov.sg/mobile/json/rest-get-all-climate-stations.json';
+//   const { body } = await got(stationsURL, {
+//     responseType: 'json',
+//     headers: { 'user-agent': undefined },
+//   });
+//   body.data.forEach((d) => {
+//     stations[d.id] = d;
+//   });
+// })();
+// const observationsCache = new Map();
+// let lastObservations = {};
 
-const dataURL =
-  'http://www.weather.gov.sg/mobile/json/rest-get-latest-observation-for-all-locs.json';
+// const dataURL =
+//   'http://www.weather.gov.sg/mobile/json/rest-get-latest-observation-for-all-locs.json';
 
 const formatAscii = ({ id, data }) => {
   return (
@@ -415,61 +427,66 @@ module.exports = async (req, res) => {
       }
       break;
     case '/observations':
-      const compact = !!query.compact;
-      res.setHeader('content-type', 'application/json');
-      res.setHeader('cache-control', 'public, max-age=60');
-      try {
-        const { body, fromCache } = await got(dataURL, {
-          responseType: 'json',
-          cache: observationsCache,
-          headers: { 'user-agent': undefined },
-        });
-        if (!fromCache || !lastObservations[compact]) {
-          const features = [];
-          Object.entries(body.data.station).forEach(([id, values]) => {
-            const { name, lat, long } = stations[id];
-            const props = {};
-            for (let k in values) {
-              const v = values[k];
-              const nv = isNaN(v) ? v : Number(v);
-              if (
-                !compact ||
-                (compact && /rain|temp|humidity|wind_direction/i.test(k) && nv)
-              ) {
-                props[k] = nv;
-              }
-            }
-            if (!compact) {
-              features.push({
-                type: 'Feature',
-                properties: {
-                  id,
-                  name,
-                  ...props,
-                },
-                geometry: {
-                  type: 'Point',
-                  coordinates: [long, lat].map(Number),
-                },
-              });
-            } else if (compact && Object.keys(props).length) {
-              features.push({
-                type: 'Feature',
-                properties: props,
-                geometry: {
-                  type: 'Point',
-                  coordinates: [long, lat].map(Number),
-                },
-              });
-            }
-          });
-          lastObservations[compact] = JSON.stringify({
-            type: 'FeatureCollection',
-            features,
-          });
-        }
-      } catch (e) {}
-      res.end(lastObservations[compact] || '');
+      res.end(
+        JSON.stringify({
+          message: 'Please use /v2/observations',
+        }),
+      );
+      // const compact = !!query.compact;
+      // res.setHeader('content-type', 'application/json');
+      // res.setHeader('cache-control', 'public, max-age=60');
+      // try {
+      //   const { body, fromCache } = await got(dataURL, {
+      //     responseType: 'json',
+      //     cache: observationsCache,
+      //     headers: { 'user-agent': undefined },
+      //   });
+      //   if (!fromCache || !lastObservations[compact]) {
+      //     const features = [];
+      //     Object.entries(body.data.station).forEach(([id, values]) => {
+      //       const { name, lat, long } = stations[id];
+      //       const props = {};
+      //       for (let k in values) {
+      //         const v = values[k];
+      //         const nv = isNaN(v) ? v : Number(v);
+      //         if (
+      //           !compact ||
+      //           (compact && /rain|temp|humidity|wind_direction/i.test(k) && nv)
+      //         ) {
+      //           props[k] = nv;
+      //         }
+      //       }
+      //       if (!compact) {
+      //         features.push({
+      //           type: 'Feature',
+      //           properties: {
+      //             id,
+      //             name,
+      //             ...props,
+      //           },
+      //           geometry: {
+      //             type: 'Point',
+      //             coordinates: [long, lat].map(Number),
+      //           },
+      //         });
+      //       } else if (compact && Object.keys(props).length) {
+      //         features.push({
+      //           type: 'Feature',
+      //           properties: props,
+      //           geometry: {
+      //             type: 'Point',
+      //             coordinates: [long, lat].map(Number),
+      //           },
+      //         });
+      //       }
+      //     });
+      //     lastObservations[compact] = JSON.stringify({
+      //       type: 'FeatureCollection',
+      //       features,
+      //     });
+      //   }
+      // } catch (e) {}
+      // res.end(lastObservations[compact] || '');
       break;
     case '/coverage':
       await geoJSONPromise;
