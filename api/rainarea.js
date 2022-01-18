@@ -91,7 +91,10 @@ const fetchRadar = (dt, opts) =>
         if (e.statusCode == 404) {
           reject(new Error('Page not found'));
         } else {
-          console.error(e);
+          console.error({
+            message: e.message,
+            code: e.code,
+          });
           reject(e);
         }
       });
@@ -221,6 +224,7 @@ const convertImageToData = (img) => {
 
 const cachedOutput = {};
 module.exports = async (req, res) => {
+  console.log('❇️  START');
   console.time('RESPONSE');
   try {
     let dt, output;
@@ -248,12 +252,16 @@ module.exports = async (req, res) => {
         try {
           img = await fetchRadar(dt);
         } catch (e) {
-          // Retry with older radar image
-          dt = datetimeStr(-5);
-          output = cachedOutput[dt];
-
-          if (!output) {
-            img = await fetchRadar(dt);
+          for (let i = 1; i <= 5; i++) {
+            // Step back 5 minutes every time
+            dt = datetimeStr(i * -5);
+            console.log('Retry with older image', dt);
+            output = cachedOutput[dt];
+            if (output) break;
+            try {
+              img = await fetchRadar(dt, { retry: 0 });
+              break;
+            } catch (e) {}
           }
         }
         if (!output) {
