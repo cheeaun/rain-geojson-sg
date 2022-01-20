@@ -32,32 +32,37 @@ const apiURL = (dt) => {
     `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`,
     `https://www.nea.gov.sg/docs/default-source/rain-area/dpsri_70km_${dt}0000dBR.dpsri.png`,
   ][urlIndex];
-  urlIndex = [1, 0][urlIndex];
   return url;
 };
+const flipAPIURL = () => {
+  urlIndex = [1, 0][urlIndex];
+};
+const apiInstance = got.extend({
+  responseType: 'buffer',
+  timeout: 2 * 1000,
+  retry: {
+    ...gotDefaultOptions.retry,
+    limit: 2,
+    statusCodes: [404, ...gotDefaultOptions.retry.statusCodes],
+    errorCodes: ['Z_BUF_ERROR', ...gotDefaultOptions.retry.errorCodes],
+  },
+  maxRedirects: 1,
+  calculateDelay: () => 1000,
+  cache: requestCache,
+  headers: { 'user-agent': undefined },
+});
 const fetchRadar = (dt, opts) =>
   new Promise((resolve, reject) => {
     console.log(`Fetch: ${dt}`);
     const url = apiURL(dt);
     console.log(`➡️  ${url}`);
     console.time('Fetch radar');
-    got(url, {
-      responseType: 'buffer',
-      timeout: 2 * 1000,
-      retry: {
-        ...gotDefaultOptions.retry,
-        limit: 2,
-        statusCodes: [404, ...gotDefaultOptions.retry.statusCodes],
-        errorCodes: ['Z_BUF_ERROR', ...gotDefaultOptions.retry.errorCodes],
-      },
-      maxRedirects: 1,
-      calculateDelay: () => 1000,
-      cache: requestCache,
-      headers: { 'user-agent': undefined },
+    apiInstance(url, {
       hooks: {
         beforeRetry: [
           (options, error) => {
             if (error) console.log('Before retry:', error.message || error);
+            flipAPIURL();
             options.url = apiURL(dt);
           },
         ],
@@ -97,6 +102,7 @@ const fetchRadar = (dt, opts) =>
           });
           reject(e);
         }
+        flipAPIURL();
       });
     // got
     //   .stream(url, { responseType: 'buffer', timeout: 1 * 60 * 1000 })
