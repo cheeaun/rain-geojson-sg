@@ -54,7 +54,7 @@ const getObservations = async () => {
     body.items.forEach((item) => {
       item.readings.forEach((reading) => {
         if (!reading.value) return;
-        const roundedValue = Math.round(reading.value * 10) / 10;
+        const roundedValue = Number(reading.value.toFixed(1));
         if (observations[reading.station_id]) {
           observations[reading.station_id][apiKeys[i]] = roundedValue;
         } else {
