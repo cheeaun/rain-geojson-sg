@@ -17,5 +17,5 @@
       "headers": { "Access-Control-Allow-Origin": "*" }
     }
   ],
-  "regions": ["sin"]
+  "regions": ["sin1"]
 }
