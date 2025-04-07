@@ -243,7 +243,7 @@ module.exports = async (req, res) => {
       output = cachedOutput[dt];
       if (!output) {
         // const img = await fetchRadar(dt, { retry: 0 });
-        const [img] = await Promise.all([
+        const img = await Promise.race([
           fetchRadar(dt, { retry: 0 }),
           timeoutPromise(5 * 1000),
         ]);
