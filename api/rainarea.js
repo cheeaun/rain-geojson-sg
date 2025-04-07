@@ -228,6 +228,8 @@ const convertImageToData = (img) => {
   };
 };
 
+const timeoutPromise = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const cachedOutput = {};
 module.exports = async (req, res) => {
   console.log('❇️  START');
@@ -240,7 +242,14 @@ module.exports = async (req, res) => {
       dt = +queryDt;
       output = cachedOutput[dt];
       if (!output) {
-        const img = await fetchRadar(dt, { retry: 0 });
+        // const img = await fetchRadar(dt, { retry: 0 });
+        const [img] = await Promise.all([
+          fetchRadar(dt, { retry: 0 }),
+          timeoutPromise(5 * 1000),
+        ]);
+        if (!img) {
+          throw new Error(`Timeout: ${dt}`);
+        }
         const rainareas = convertImageToData(img);
         output = cachedOutput[dt] = {
           id: '' + dt,
