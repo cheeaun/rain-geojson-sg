@@ -29,8 +29,8 @@ const gotDefaultOptions = got.defaults.options;
 let urlIndex = 0;
 const apiURL = (dt) => {
   const url = [
-    `https://www.nea.gov.sg/docs/default-source/rain-area/dpsri_70km_${dt}0000dBR.dpsri.png`,
     `https://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`,
+    `https://www.nea.gov.sg/docs/default-source/rain-area/dpsri_70km_${dt}0000dBR.dpsri.png`,
   ][urlIndex];
   return url;
 };
@@ -265,7 +265,14 @@ module.exports = async (req, res) => {
       if (!output) {
         let img;
         try {
-          img = await fetchRadar(dt);
+          // img = await fetchRadar(dt);
+          img = await Promise.race([
+            fetchRadar(dt),
+            timeoutPromise(5 * 1000),
+          ]);
+          if (!img) {
+            throw new Error(`Timeout: ${dt}`);
+          }
         } catch (e) {
           for (let i = 1; i <= 5; i++) {
             // Step back 5 minutes every time
@@ -274,7 +281,14 @@ module.exports = async (req, res) => {
             output = cachedOutput[dt];
             if (output) break;
             try {
-              img = await fetchRadar(dt, { retry: 0 });
+              // img = await fetchRadar(dt, { retry: 0 });
+              img = await Promise.race([
+                fetchRadar(dt, { retry: 0 }),
+                timeoutPromise(5 * 1000),
+              ]);
+              if (!img) {
+                throw new Error(`Timeout: ${dt}`);
+              }
               break;
             } catch (e) {}
           }
