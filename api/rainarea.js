@@ -29,8 +29,8 @@ const gotDefaultOptions = got.defaults.options;
 let urlIndex = 0;
 const apiURL = (dt) => {
   const url = [
-    `http://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`,
     `https://www.nea.gov.sg/docs/default-source/rain-area/dpsri_70km_${dt}0000dBR.dpsri.png`,
+    `https://www.weather.gov.sg/files/rainarea/50km/v2/dpsri_70km_${dt}0000dBR.dpsri.png`,
   ][urlIndex];
   return url;
 };
