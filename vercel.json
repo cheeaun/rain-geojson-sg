@@ -7,6 +7,16 @@
   "routes": [
     { "src": "/favicon.ico", "status": 204 },
     {
+      "src": "/v2/observations",
+      "dest": "https://api2.checkweather.sg/v1/observations",
+      "headers": { "Access-Control-Allow-Origin": "*" }
+    },
+    {
+      "src": "/v2/rainarea",
+      "dest": "https://api2.checkweather.sg/v1/rainarea",
+      "headers": { "Access-Control-Allow-Origin": "*" }
+    },
+    {
       "src": "/v2/(.*)",
       "dest": "/api/$1.js",
       "headers": { "Access-Control-Allow-Origin": "*" }
